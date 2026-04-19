@@ -1,0 +1,354 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Neubrutalism Color Palette */
+    --background: 60 100% 97%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 100% 50%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 280 100% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+    --radius: 0px;
+    
+    /* Custom Neubrutalism Colors */
+    --neo-yellow: 60 100% 50%;
+    --neo-pink: 320 100% 60%;
+    --neo-blue: 200 100% 50%;
+    --neo-green: 120 100% 45%;
+    --neo-purple: 270 100% 60%;
+    --neo-orange: 30 100% 50%;
+    --neo-cyan: 180 100% 50%;
+    
+    /* Border width */
+    --border-width: 3px;
+    --shadow-offset: 6px;
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 60 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 60 100% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 20%;
+    --ring: 60 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer components {
+  /* Neubrutalism Button Styles */
+  .neo-button {
+    @apply relative px-6 py-3 font-bold text-black bg-white transition-all duration-150;
+    border: var(--border-width) solid black;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+  }
+
+  .neo-button:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 black;
+  }
+
+  .neo-button:active {
+    transform: translate(var(--shadow-offset), var(--shadow-offset));
+    box-shadow: 0 0 0 0 black;
+  }
+
+  .neo-button-primary {
+    @apply bg-[hsl(var(--neo-yellow))];
+  }
+
+  .neo-button-pink {
+    @apply bg-[hsl(var(--neo-pink))] text-white;
+  }
+
+  .neo-button-blue {
+    @apply bg-[hsl(var(--neo-blue))] text-white;
+  }
+
+  .neo-button-green {
+    @apply bg-[hsl(var(--neo-green))] text-white;
+  }
+
+  /* Neubrutalism Card Styles */
+  .neo-card {
+    @apply bg-white p-6;
+    border: var(--border-width) solid black;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+  }
+
+  .neo-card-yellow {
+    @apply bg-[hsl(var(--neo-yellow))];
+  }
+
+  .neo-card-pink {
+    @apply bg-[hsl(var(--neo-pink))] text-white;
+  }
+
+  .neo-card-blue {
+    @apply bg-[hsl(var(--neo-blue))] text-white;
+  }
+
+  .neo-card-green {
+    @apply bg-[hsl(var(--neo-green))] text-white;
+  }
+
+  /* Neubrutalism Input Styles */
+  .neo-input {
+    @apply px-4 py-3 bg-white outline-none transition-all;
+    border: var(--border-width) solid black;
+    box-shadow: 4px 4px 0 0 black;
+  }
+
+  .neo-input:focus {
+    box-shadow: 2px 2px 0 0 black;
+    transform: translate(2px, 2px);
+  }
+
+  /* Neubrutalism Badge Styles */
+  .neo-badge {
+    @apply inline-flex items-center px-3 py-1 text-sm font-bold;
+    border: 2px solid black;
+    box-shadow: 2px 2px 0 0 black;
+  }
+
+  .neo-badge-yellow {
+    @apply bg-[hsl(var(--neo-yellow))];
+  }
+
+  .neo-badge-pink {
+    @apply bg-[hsl(var(--neo-pink))] text-white;
+  }
+
+  .neo-badge-blue {
+    @apply bg-[hsl(var(--neo-blue))] text-white;
+  }
+
+  /* Bento Grid */
+  .bento-grid {
+    @apply grid gap-4;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .bento-item {
+    @apply neo-card transition-all duration-300;
+  }
+
+  .bento-item:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: calc(var(--shadow-offset) + 4px) calc(var(--shadow-offset) + 4px) 0 0 black;
+  }
+
+  /* Admin Dark Mode */
+  .admin-dark {
+    --admin-bg: 0 0% 5%;
+    --admin-fg: 0 0% 100%;
+    --admin-caution: 50 100% 50%;
+    --admin-card: 0 0% 10%;
+    --admin-border: 0 0% 30%;
+  }
+
+  .admin-caution {
+    @apply text-black font-bold;
+    background-color: hsl(50 100% 50%);
+    border: 3px solid hsl(50 100% 50%);
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-left: 3px solid black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: black;
+    border: 2px solid #f0f0f0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #333;
+  }
+
+  /* Mobile Bottom Navigation */
+  .mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white z-50;
+    border-top: var(--border-width) solid black;
+    box-shadow: 0 -4px 0 0 rgba(0,0,0,0.1);
+  }
+
+  .mobile-nav-item {
+    @apply flex flex-col items-center justify-center py-3 px-4 transition-colors;
+  }
+
+  .mobile-nav-item.active {
+    @apply bg-[hsl(var(--neo-yellow))];
+  }
+
+  /* Animation Classes */
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .bounce-in {
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes bounceIn {
+    0% { 
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% { 
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Countdown Timer */
+  .countdown-box {
+    @apply inline-flex items-center justify-center px-3 py-2 font-mono font-bold text-lg;
+    border: 3px solid black;
+    background: hsl(var(--neo-yellow));
+  }
+
+  /* Chat Bubble */
+  .chat-bubble {
+    @apply relative px-4 py-3 max-w-[80%];
+    border: 3px solid black;
+  }
+
+  .chat-bubble-sent {
+    @apply bg-[hsl(var(--neo-yellow))] ml-auto;
+    border-radius: 16px 16px 0 16px;
+  }
+
+  .chat-bubble-received {
+    @apply bg-white;
+    border-radius: 16px 16px 16px 0;
+  }
+
+  .chat-bubble-bot {
+    @apply bg-[hsl(var(--neo-purple))] text-white;
+    border-radius: 16px;
+  }
+
+  /* Step Indicator */
+  .step-indicator {
+    @apply flex items-center justify-center w-10 h-10 font-bold text-lg;
+    border: 3px solid black;
+    background: white;
+  }
+
+  .step-indicator.active {
+    @apply bg-[hsl(var(--neo-yellow))];
+  }
+
+  .step-indicator.completed {
+    @apply bg-[hsl(var(--neo-green))] text-white;
+  }
+
+  /* Filter Pill */
+  .filter-pill {
+    @apply px-4 py-2 font-bold text-sm transition-all;
+    border: 3px solid black;
+    background: white;
+    box-shadow: 3px 3px 0 0 black;
+  }
+
+  .filter-pill:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 0 black;
+  }
+
+  .filter-pill.active {
+    @apply bg-[hsl(var(--neo-yellow))];
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 0 black;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .neo-shadow {
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+  }
+
+  .neo-shadow-sm {
+    box-shadow: 3px 3px 0 0 black;
+  }
+
+  .neo-shadow-lg {
+    box-shadow: 8px 8px 0 0 black;
+  }
+}
