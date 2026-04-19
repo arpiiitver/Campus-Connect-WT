@@ -1,0 +1,381 @@
+================================================================================
+                        CAMPUS CONNECT — PROJECT DOCUMENTATION
+                   VIT College Marketplace Platform (Web Technology CP)
+================================================================================
+
+
+1. PROJECT OVERVIEW
+================================================================================
+
+Campus Connect is a full-stack college marketplace web application built for 
+VIT students. It allows students to buy, sell, and rent items (books, notes, 
+electronics, gear, etc.) within the campus community. The platform features 
+real-time encrypted chat, user trust scores, an admin panel, and a reporting 
+system to keep the marketplace safe.
+
+   - Only @vit.edu email addresses can register.
+   - All chat messages are encrypted using AES-256-GCM encryption.
+   - Admins can manage users, listings, and reports from a dedicated panel.
+   - Listings support both "Sell" and "Rent" types.
+
+
+2. TECH STACK
+================================================================================
+
+ FRONTEND (Client)
+ ─────────────────
+ • React 19           — Core UI library
+ • JavaScript (ES6+)  — Core language
+ • Vite 7             — Build tool & dev server
+ • Tailwind CSS 3.4   — Utility-first CSS framework
+ • Framer Motion 12   — Animations & page transitions
+ • Lucide React       — Icon library (550+ icons)
+ • Socket.IO Client   — Real-time WebSocket communication
+ • Radix UI           — Accessible, unstyled UI primitives
+ • Sonner             — Toast notification system
+ • Date-fns           — Date formatting utility
+ • Recharts           — Charting library
+
+ BACKEND (Server)
+ ────────────────
+ • Node.js            — JavaScript runtime
+ • Express.js 4.18    — Web framework for REST APIs
+ • MongoDB            — NoSQL database (hosted on MongoDB Atlas)
+ • Mongoose 8.2       — MongoDB ODM (Object Data Modeling)
+ • Socket.IO 4.8      — Real-time WebSocket server
+ • JSON Web Token 9   — JWT-based authentication
+ • bcryptjs           — Password hashing (salted, 10 rounds)
+ • dotenv             — Environment variable management
+ • Node.js crypto     — AES-256-GCM message encryption
+
+ DATABASE
+ ────────
+ • MongoDB Atlas      — Cloud-hosted MongoDB cluster
+ • 5 Collections      — Users, Listings, ChatRooms, Messages, Reports
+
+
+3. PROJECT STRUCTURE
+================================================================================
+
+Campus Connect/
+├── app/                          ← FRONTEND (React + Vite)
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── DesktopNav.jsx        — Top navigation bar (desktop)
+│   │   │   ├── MobileNav.jsx         — Bottom navigation bar (mobile)
+│   │   │   └── ui/                   — 53 reusable UI components (Radix-based)
+│   │   │       ├── button.jsx
+│   │   │       ├── card.jsx
+│   │   │       ├── dialog.jsx
+│   │   │       ├── input.jsx
+│   │   │       ├── select.jsx
+│   │   │       ├── sonner.jsx        — Toast notifications
+│   │   │       └── ... (50+ more)
+│   │   │
+│   │   ├── pages/
+│   │   │   ├── LoginPage.jsx         — Login & Signup (with email validation)
+│   │   │   ├── BrowsePage.jsx        — Browse all available listings
+│   │   │   ├── CreateListingPage.jsx — Create new listing form
+│   │   │   ├── ListingDetailPage.jsx — Single listing view with chat & report
+│   │   │   ├── DashboardPage.jsx     — User dashboard (stats, my listings, profile)
+│   │   │   ├── ChatPage.jsx          — Real-time encrypted chat interface
+│   │   │   └── AdminPage.jsx         — Admin panel (users, listings, reports, analytics)
+│   │   │
+│   │   ├── lib/
+│   │   │   ├── api.js                — Central API client (30+ API functions)
+│   │   │   ├── socket.js            — Socket.IO client (connect, join, send, typing)
+│   │   │   └── utils.js             — Utility functions (cn for class merging)
+│   │   │
+│   │   ├── hooks/
+│   │   │   └── use-mobile.js        — Custom hook for responsive detection
+│   │   │
+│   │   ├── types/
+│   │   │   └── index.js             — Constants and definitions
+│   │   │
+│   │   ├── App.jsx                   — Main app component with routing & auth state
+│   │   ├── App.css                   — App-specific styles
+│   │   ├── index.css                 — Global styles & design tokens
+│   │   └── main.jsx                  — React entry point
+│   │
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.js
+│
+└── server/                       ← BACKEND (Node.js + Express)
+    ├── models/
+    │   ├── User.js                   — User schema (auth, profile, trust score)
+    │   ├── Listing.js                — Listing schema (sell/rent, categories)
+    │   ├── ChatRoom.js               — Chat room schema (buyer ↔ seller)
+    │   ├── Message.js                — Encrypted message schema (AES-256-GCM)
+    │   └── Report.js                 — Report schema (for flagged listings)
+    │
+    ├── routes/
+    │   ├── auth.js                   — Auth routes (signup, login, me, profile)
+    │   ├── listings.js               — Listing CRUD + status update + report
+    │   ├── chat.js                   — Chat room creation + message send/receive
+    │   └── admin.js                  — Admin routes (stats, users, listings, reports)
+    │
+    ├── middleware/
+    │   ├── auth.js                   — JWT authentication middleware
+    │   └── adminAuth.js              — Admin-only authentication middleware
+    │
+    ├── utils/
+    │   └── crypto.js                 — AES-256-GCM encryption/decryption utilities
+    │
+    ├── server.js                     — Express server, Socket.IO, DB connection, admin seed
+    ├── package.json
+    └── .env                          — Environment variables (DB URI, JWT secret, etc.)
+
+
+4. DATABASE MODELS (MongoDB Collections)
+================================================================================
+
+ 4.1 USER
+ ────────
+ Field            Type        Description
+ username         String      Unique, 3-30 characters
+ college_email    String      Must end with @vit.edu (unique)
+ password         String      Hashed with bcryptjs (10 salt rounds)
+ full_name        String      Optional display name
+ contact          String      Optional phone number
+ avatar_url       String      DiceBear generated avatar
+ trust_score      Number      0-100, default 100 (admin-adjustable)
+ is_admin         Boolean     Admin flag, default false
+ is_banned        Boolean     Ban flag, default false
+ createdAt        Date        Auto-generated timestamp
+
+ 4.2 LISTING
+ ───────────
+ Field            Type        Description
+ seller_id        ObjectId    Reference to User who created it
+ title            String      Max 100 characters
+ category         Enum        Notes, Electronics, Gear, Books, Other
+ description      String      Max 500 characters
+ type             Enum        Sell or Rent
+ price            Number      Price in INR (₹)
+ min_price        Number      Optional minimum acceptable price
+ security_deposit Number      For Rent type only
+ max_days         Number      Max rental duration (days)
+ status           Enum        Available, Sold, Rented
+ image_url        String      Base64 encoded image or URL
+ createdAt        Date        Auto-generated timestamp
+
+ 4.3 CHATROOM
+ ────────────
+ Field            Type        Description
+ buyer_id         ObjectId    Reference to buyer User
+ seller_id        ObjectId    Reference to seller User
+ listing_id       ObjectId    Reference to the Listing being discussed
+ last_message_at  Date        Timestamp of most recent message
+ createdAt        Date        Auto-generated timestamp
+
+ 4.4 MESSAGE
+ ───────────
+ Field            Type        Description
+ room_id          ObjectId    Reference to ChatRoom
+ sender_id        ObjectId    Reference to sender User
+ ciphertext       String      AES-256-GCM encrypted message content
+ iv               String      Initialization vector (hex)
+ tag              String      GCM authentication tag (hex)
+ createdAt        Date        Auto-generated timestamp
+
+ 4.5 REPORT
+ ──────────
+ Field            Type        Description
+ reporter_id      ObjectId    User who filed the report
+ listing_id       ObjectId    Listing being reported
+ reason           String      Reason for reporting (max 500 chars)
+ status           Enum        pending, dismissed, actioned
+ createdAt        Date        Auto-generated timestamp
+
+
+5. API ENDPOINTS
+================================================================================
+
+ 5.1 AUTHENTICATION (/api/auth)
+ ──────────────────────────────
+ POST   /signup          — Register new user (username, email, password)
+ POST   /login           — Login with email & password → returns JWT
+ GET    /me              — Get current user profile (JWT required)
+ PATCH  /profile         — Update full_name and contact
+
+ 5.2 LISTINGS (/api/listings)
+ ────────────────────────────
+ GET    /                — Get all available listings (public)
+ GET    /my              — Get current user's listings (auth required)
+ GET    /:id             — Get single listing details
+ POST   /                — Create new listing (auth required)
+ PATCH  /:id/status      — Update listing status (owner only)
+ DELETE /:id             — Delete sold/rented listing (owner only)
+ POST   /:id/report      — Report a listing (auth required)
+
+ 5.3 CHAT (/api/chat)
+ ────────────────────
+ POST   /rooms           — Create or get existing chat room for a listing
+ GET    /rooms           — Get all user's chat rooms
+ GET    /rooms/:id/messages — Get decrypted messages for a room
+ POST   /rooms/:id/messages — Send encrypted message
+
+ 5.4 ADMIN (/api/admin) — All routes require admin auth
+ ───────────────────────
+ GET    /stats           — Platform statistics + category analytics
+ GET    /users           — List all users (supports ?search= query)
+ PATCH  /users/:id/ban   — Toggle ban/unban a user
+ PATCH  /users/:id/trust — Update user's trust score
+ GET    /listings        — List ALL listings (any status)
+ DELETE /listings/:id    — Force delete any listing
+ PATCH  /listings/:id/status — Force change listing status
+ GET    /reports         — List all pending reports
+ PATCH  /reports/:id/dismiss — Dismiss a report
+ PATCH  /reports/:id/action  — Take action (delete listing + mark report)
+
+
+6. SOCKET.IO EVENTS (Real-Time Communication)
+================================================================================
+
+ CLIENT → SERVER
+ ───────────────
+ join_room        — Join a chat room to receive messages
+ leave_room       — Leave a chat room
+ send_message     — Send a message (gets encrypted server-side)
+ typing           — Broadcast typing indicator
+ stop_typing      — Broadcast stop typing indicator
+
+ SERVER → CLIENT
+ ───────────────
+ new_message      — Receive a new decrypted message
+ user_typing      — Someone is typing in the room
+ user_stopped_typing — Someone stopped typing
+
+
+7. KEY FEATURES BREAKDOWN
+================================================================================
+
+ 7.1 AUTHENTICATION & AUTHORIZATION
+ ───────────────────────────────────
+ • Email-restricted signup (only @vit.edu domains)
+ • Passwords hashed with bcryptjs (10 salt rounds)
+ • JWT tokens (7-day expiry) stored in localStorage
+ • Role-based access: Regular User vs Admin
+ • Ban system: Banned users see "Account Banned" screen
+ • Auto-seeded admin account on first server start
+
+ 7.2 MARKETPLACE (Listings)
+ ──────────────────────────
+ • Two listing types: Sell (one-time purchase) and Rent (with deposit + max days)
+ • Five categories: Notes, Electronics, Gear, Books, Other
+ • Image upload via base64 encoding
+ • Category-based filtering with animated filter pills
+ • Status tracking: Available → Sold/Rented
+ • Sellers can remove their own sold/rented listings
+ • Neobrutalism design style with bold borders and shadows
+
+ 7.3 REAL-TIME ENCRYPTED CHAT
+ ────────────────────────────
+ • Socket.IO WebSocket connection with JWT authentication
+ • Every chat room gets a unique AES-256-GCM encryption key
+ • Key derivation: PBKDF2 with 100,000 iterations (SHA-512)
+ • Messages encrypted before storing in database
+ • Messages decrypted only when retrieved via authenticated API calls
+ • Real-time typing indicators
+ • Auto-reconnection with retry logic (up to 10 attempts)
+
+ 7.4 ADMIN PANEL
+ ───────────────
+ • Dark-themed admin interface with "God Mode" branding
+ • Dashboard with real-time platform statistics
+ • Category analytics with animated progress bars
+ • Sell vs Rent and status distribution breakdowns
+ • User management: view all, ban/unban, edit trust scores
+ • Listing management: view all (any status), force-delete, force-status-change
+ • Report management: view pending, dismiss, or take action (delete listing)
+ • Debounced search across users and listings
+
+ 7.5 REPORTING SYSTEM
+ ────────────────────
+ • Any logged-in user can report a listing with a reason
+ • Duplicate report prevention (one pending report per user per listing)
+ • Cannot report own listings
+ • Reports appear in admin panel for review
+ • Admin can dismiss (false alarm) or take action (delete the listing)
+
+ 7.6 USER DASHBOARD
+ ──────────────────
+ • Profile overview (username, email, trust score)
+ • Listing stats: total, available, sold, rented
+ • My Listings tab with status badges
+ • Profile editor: full name and contact number
+ • Quick-remove button for sold/rented listings
+
+
+8. SECURITY MEASURES
+================================================================================
+
+ • All passwords hashed with bcryptjs (never stored in plaintext)
+ • JWT-based authentication for all protected routes
+ • Admin routes protected by separate adminAuth middleware
+ • Chat messages encrypted at rest using AES-256-GCM
+ • Per-room encryption keys derived via PBKDF2 (100K iterations)
+ • Email domain validation (@vit.edu only)
+ • Ban system prevents access for suspended accounts
+ • Input validation on both client and server side
+ • CORS configured for specific origins only
+
+
+9. DESIGN & UI
+================================================================================
+
+ • Neobrutalism design style — bold black borders, hard shadows, vibrant colors
+ • Color palette: Yellow (#FFE600), Blue, Green, Pink, Purple accents
+ • Google Fonts: Space Grotesk (headings), Inter (body)
+ • Fully responsive: Desktop nav (top) + Mobile nav (bottom)
+ • Framer Motion page transitions and micro-animations
+ • Animated loading spinners and skeleton states
+ • Sonner toast notifications for all user actions
+ • Modal dialogs for confirmations (delete, report)
+
+
+10. HOW TO RUN
+================================================================================
+
+ PREREQUISITES
+ ─────────────
+ • Node.js (v18+)
+ • npm
+ • MongoDB Atlas account (or local MongoDB)
+
+ BACKEND
+ ───────
+ cd server
+ npm install
+ npm run dev              ← Starts on http://localhost:5000
+
+ FRONTEND
+ ────────
+ cd app
+ npm install
+ npm run dev              ← Starts on http://localhost:5173
+
+ ADMIN LOGIN
+ ───────────
+ Email:    admin@vit.edu
+ Password: admin123
+
+
+11. ENVIRONMENT VARIABLES (server/.env)
+================================================================================
+
+ Variable            Description
+ MONGO_URI           MongoDB Atlas connection string
+ JWT_SECRET          Secret key for signing JWT tokens
+ PORT                Server port (default: 5000)
+ ENCRYPTION_SECRET   Master key for chat message encryption
+ ADMIN_EMAIL         Admin user email (seeded on startup)
+ ADMIN_PASSWORD      Admin user password (seeded on startup)
+ ADMIN_USERNAME      Admin display name (seeded on startup)
+
+
+================================================================================
+                         Built for VIT Web Technology Course Project
+                                    Campus Connect © 2026
+================================================================================
