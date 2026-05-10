@@ -134,13 +134,13 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-4xl font-bold mb-2">Dashboard</h1>
-              <p className="text-gray-600">
+              <p style={{ color: "hsl(var(--neo-text-muted))" }}>
                 Welcome back, <span className="font-bold">{user.username}</span>
                 !
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-12 h-12 bg-[hsl(var(--neo-yellow))] rounded-full border-4 border-black flex items-center justify-center">
+              <div className="w-12 h-12 bg-[hsl(var(--neo-yellow))] rounded-full border-4 border-[hsl(var(--neo-border))] flex items-center justify-center">
                 <span className="font-bold text-lg">
                   {user.username?.[0]?.toUpperCase()}
                 </span>
@@ -166,7 +166,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
           </motion.div>
 
           <motion.div
-            className="neo-card bg-white border-4 border-black"
+            className="neo-card"
             variants={itemVariants}
           >
             <TrendingUp className="w-8 h-8 mb-2" />
@@ -236,17 +236,17 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                   Your Profile
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[hsl(60,100%,97%)] border-2 border-black">
-                    <p className="text-sm text-gray-500 mb-1">Username</p>
+                  <div className="p-4 border-2 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                    <p className="text-sm mb-1" style={{ color: "hsl(var(--neo-text-muted))" }}>Username</p>
                     <p className="font-bold text-lg">{user.username}</p>
                   </div>
-                  <div className="p-4 bg-[hsl(60,100%,97%)] border-2 border-black">
-                    <p className="text-sm text-gray-500 mb-1">Email</p>
+                  <div className="p-4 border-2 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                    <p className="text-sm mb-1" style={{ color: "hsl(var(--neo-text-muted))" }}>Email</p>
                     <p className="font-bold text-sm truncate">
                       {user.college_email}
                     </p>
                   </div>
-                  <div className="p-4 bg-[hsl(var(--neo-yellow))] border-2 border-black">
+                  <div className="p-4 bg-[hsl(var(--neo-yellow))] border-2 border-[hsl(var(--neo-border))] text-black">
                     <p className="text-sm mb-1">Trust Score</p>
                     <p className="font-bold text-3xl">{user.trust_score} ⭐</p>
                   </div>
@@ -261,16 +261,16 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                 </h3>
                 {myListings.length === 0 ? (
                   <div className="text-center py-8">
-                    <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-gray-500 mb-4">
+                    <Package className="w-16 h-16 mx-auto mb-4" style={{ color: "hsl(var(--neo-text-muted))" }} />
+                    <p className="mb-4" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       You haven't listed anything yet.
                     </p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       Go to "Create Listing" to sell or rent your items!
                     </p>
                   </div>
                 ) : (
-                  <p className="text-gray-600">
+                  <p style={{ color: "hsl(var(--neo-text-muted))" }}>
                     You have <strong>{stats.totalListings}</strong> listing(s)
                     total — <strong>{stats.availableItems}</strong> available,{" "}
                     <strong>{stats.soldItems}</strong> sold,{" "}
@@ -297,9 +297,9 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
               </div>
               {myListings.length === 0 ? (
                 <div className="neo-card text-center py-12">
-                  <Package className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500 mb-4">No listings yet</p>
-                  <p className="text-sm text-gray-400">
+                  <Package className="w-16 h-16 mx-auto mb-4" style={{ color: "hsl(var(--neo-text-muted))" }} />
+                  <p className="mb-4" style={{ color: "hsl(var(--neo-text-muted))" }}>No listings yet</p>
+                  <p className="text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
                     Create your first listing to get started!
                   </p>
                 </div>
@@ -313,7 +313,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                       whileHover={{ scale: 1.01 }}
                     >
                       {/* Image */}
-                      <div className="w-full md:w-32 h-32 bg-gray-200 border-4 border-black flex-shrink-0 overflow-hidden">
+                      <div className="w-full md:w-32 h-32 border-4 border-[hsl(var(--neo-border))] flex-shrink-0 overflow-hidden" style={{ background: "hsl(var(--neo-surface-raised))" }}>
                         {listing.image_url ? (
                           <img
                             src={listing.image_url}
@@ -322,7 +322,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-8 h-8 text-gray-400" />
+                            <Package className="w-8 h-8" style={{ color: "hsl(var(--neo-text-muted))" }} />
                           </div>
                         )}
                       </div>
@@ -339,7 +339,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                           >
                             {listing.type}
                           </span>
-                          <span className="neo-badge bg-white text-xs">
+                          <span className="neo-badge text-xs">
                             {listing.category}
                           </span>
                           <span
@@ -358,7 +358,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                         <h4 className="text-xl font-bold mb-1">
                           {listing.title}
                         </h4>
-                        <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                        <p className="text-sm line-clamp-2 mb-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
                           {listing.description}
                         </p>
 
@@ -378,7 +378,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                                       "Available",
                                     )
                                   }
-                                  className="neo-button bg-white text-[hsl(var(--neo-green))] text-xs py-1 px-3 border border-black flex items-center gap-1"
+                                  className="neo-button text-[hsl(var(--neo-green))] text-xs py-1 px-3 border border-[hsl(var(--neo-border))] flex items-center gap-1"
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
                                 >
@@ -419,7 +419,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                                 {listing.type === "Sell" ? "Sold" : "Rented"}
                               </motion.button>
                             )}
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
                               {listing.created_at || listing.createdAt
                                 ? `Posted ${format(new Date(listing.created_at || listing.createdAt || ""), "MMM d, yyyy")}`
                                 : ""}
@@ -448,17 +448,17 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                   <User className="w-5 h-5" /> Account Info
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[hsl(60,100%,97%)] border-2 border-black">
-                    <p className="text-xs text-gray-500 mb-1">Username</p>
+                  <div className="p-4 border-2 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                    <p className="text-xs mb-1" style={{ color: "hsl(var(--neo-text-muted))" }}>Username</p>
                     <p className="font-bold">{user.username}</p>
                   </div>
-                  <div className="p-4 bg-[hsl(60,100%,97%)] border-2 border-black">
-                    <p className="text-xs text-gray-500 mb-1">Email</p>
+                  <div className="p-4 border-2 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                    <p className="text-xs mb-1" style={{ color: "hsl(var(--neo-text-muted))" }}>Email</p>
                     <p className="font-bold text-sm truncate">
                       {user.college_email}
                     </p>
                   </div>
-                  <div className="p-4 bg-[hsl(var(--neo-yellow))] border-2 border-black">
+                  <div className="p-4 bg-[hsl(var(--neo-yellow))] border-2 border-[hsl(var(--neo-border))] text-black">
                     <p className="text-xs mb-1">Trust Score</p>
                     <p className="font-bold text-2xl">{user.trust_score} ⭐</p>
                   </div>
@@ -484,7 +484,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                       maxLength={100}
                     />
 
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs mt-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       This will be visible to buyers/sellers
                     </p>
                   </div>
@@ -502,7 +502,7 @@ export default function DashboardPage({ user, onListingClick, onUpdateUser }) {
                       maxLength={20}
                     />
 
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs mt-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       Shared with the other party after agreement
                     </p>
                   </div>

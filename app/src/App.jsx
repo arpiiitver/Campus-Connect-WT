@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+
+// Apply dark mode immediately on load to prevent FOUC
+if (typeof window !== "undefined" && localStorage.getItem("cc_theme") === "dark") {
+  document.documentElement.classList.add("dark");
+}
+
 import { motion, AnimatePresence } from "framer-motion";
 import { apiGetMe, clearToken } from "@/lib/api";
 
@@ -160,14 +166,15 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(60,100%,97%)]">
+    <div className="min-h-screen neo-bg">
       <Toaster
         position="top-center"
         toastOptions={{
           style: {
-            background: "white",
-            border: "3px solid black",
-            boxShadow: "6px 6px 0 0 black",
+            background: "hsl(var(--neo-surface))",
+            color: "hsl(var(--neo-text))",
+            border: "3px solid hsl(var(--neo-border))",
+            boxShadow: "6px 6px 0 0 hsla(var(--neo-shadow-color), 0.5)",
             fontFamily: "Space Grotesk, sans-serif",
           },
         }}

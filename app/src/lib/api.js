@@ -1,5 +1,6 @@
 // Central API client for Campus Connect backend
-const BASE_URL = "http://localhost:5000/api";
+export const SERVER_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Get stored JWT token
 const getToken = () => localStorage.getItem("cc_token");
@@ -14,9 +15,13 @@ export const clearToken = () => localStorage.removeItem("cc_token");
 const apiFetch = async (path, options = {}) => {
   const token = getToken();
   const headers = {
-    "Content-Type": "application/json",
     ...(options.headers || {}),
   };
+
+  // Only json by default if body is not FormData
+  if (!(options.body instanceof FormData)) {
+    headers["Content-Type"] = headers["Content-Type"] || "application/json";
+  }
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -103,10 +108,35 @@ export const apiGetMyRooms = () => apiFetch("/chat/rooms");
 export const apiGetRoomMessages = (roomId) =>
   apiFetch(`/chat/rooms/${roomId}/messages`);
 
-export const apiSendMessage = (roomId, text) =>
+export const apiSendMessage = (roomId, text, media_url = null, media_type = null) =>
   apiFetch(`/chat/rooms/${roomId}/messages`, {
     method: "POST",
+    body: JSON.stringify({ text, media_url, media_type }),
+  });
+
+export const apiUploadChatMedia = (roomId, file) => {
+  const formData = new FormData();
+  formData.append("media", file);
+  return apiFetch(`/chat/rooms/${roomId}/media`, {
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const apiEditMessage = (roomId, messageId, text) =>
+  apiFetch(`/chat/rooms/${roomId}/messages/${messageId}`, {
+    method: "PATCH",
     body: JSON.stringify({ text }),
+  });
+
+export const apiDeleteMessage = (roomId, messageId) =>
+  apiFetch(`/chat/rooms/${roomId}/messages/${messageId}`, {
+    method: "DELETE",
+  });
+
+export const apiDeleteChat = (roomId) =>
+  apiFetch(`/chat/rooms/${roomId}`, {
+    method: "DELETE",
   });
 
 // ── Reports ───────────────────────────────────────────

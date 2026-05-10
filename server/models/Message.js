@@ -24,6 +24,23 @@ const messageSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  media_url: {
+    type: String,
+    default: null,
+  },
+  media_type: {
+    type: String,
+    enum: ['image', 'video', null],
+    default: null,
+  },
+  is_edited: {
+    type: Boolean,
+    default: false,
+  },
+  is_deleted: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
 // Index for efficient message retrieval per room

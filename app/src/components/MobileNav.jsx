@@ -39,18 +39,21 @@ export default function MobileNav({ currentView, onNavigate, user, onLogout }) {
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               >
                 <Icon
-                  className={`w-6 h-6 mb-1 ${isActive ? "text-black" : "text-gray-500"}`}
+                  className={`w-6 h-6 mb-1 ${isActive ? "text-black" : ""}`}
+                  style={{ color: isActive ? undefined : "hsl(var(--neo-text-muted))" }}
                 />
               </motion.div>
               <span
-                className={`text-xs font-bold ${isActive ? "text-black" : "text-gray-500"}`}
+                className={`text-xs font-bold ${isActive ? "text-black" : ""}`}
+                style={{ color: isActive ? undefined : "hsl(var(--neo-text-muted))" }}
               >
                 {item.label}
               </span>
 
               {isActive && (
                 <motion.div
-                  className="absolute -top-1 w-8 h-1 bg-black rounded-full"
+                  className="absolute -top-1 w-8 h-1 rounded-full"
+                  style={{ background: "hsl(var(--neo-text))" }}
                   layoutId="mobileNavIndicator"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />

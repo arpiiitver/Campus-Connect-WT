@@ -1,0 +1,129 @@
+================================================================================
+                        CAMPUS CONNECT — SYSTEM WORKFLOW
+                   Frontend ↔ Backend Architecture & Data Flow
+================================================================================
+
+This document outlines the step-by-step workflow of key user actions within 
+the Campus Connect platform, detailing exactly how the React Frontend (Client) 
+communicates with the Node.js/Express Backend (Server) and Database.
+
+================================================================================
+1. USER REGISTRATION (SIGNUP) WORKFLOW
+================================================================================
+
+User Action: A student fills out the signup form on the frontend (LoginPage.jsx) 
+with their display name, @vit.edu email, and password.
+
+1.  [Frontend] Input Validation: React checks if the email ends with "@vit.edu" 
+    and ensures the password meets minimum length requirements.
+2.  [Frontend] API Call: React makes an HTTP POST request to `/api/auth/signup` 
+    with the user's data (JSON payload).
+3.  [Backend] Endpoint Hit: The Express router routes the request to the auth controller.
+4.  [Backend] Database Check: Mongoose queries the MongoDB "Users" collection 
+    to ensure the email and username are not already taken.
+5.  [Backend] Password Hashing: The backend uses `bcryptjs` to hash the plaintext 
+    password with 10 salt rounds.
+6.  [Backend] Database Insert: A new User document is created in MongoDB with 
+    the hashed password and a default trust score of 100.
+7.  [Backend] Response: The server immediately generates a JSON Web Token (JWT), 
+    signs it with a secret key, and sends it back to the client along with the 
+    user's basic profile details (HTTP 201 Created).
+8.  [Frontend] State Update: The React context/state stores the user data, saves 
+    the JWT to `localStorage` for future requests, and redirects the user to the Dashboard.
+
+================================================================================
+2. USER LOGIN WORKFLOW
+================================================================================
+
+User Action: An existing user enters their email and password to log in.
+
+1.  [Frontend] API Call: React makes an HTTP POST request to `/api/auth/login`.
+2.  [Backend] Database Retrieval: Mongoose searches the "Users" collection for 
+    the provided email.
+3.  [Backend] Password Verification: `bcryptjs.compare()` checks if the entered 
+    password matches the hash stored in the database.
+4.  [Backend] Ban Check: The server verifies `is_banned === false`. If true, 
+    login is denied.
+5.  [Backend] Response: A new JWT is generated and returned to the client (HTTP 200 OK).
+6.  [Frontend] Session Established: The token is saved to `localStorage`. The App 
+    now includes this token in the "Authorization: Bearer <token>" header for all 
+    subsequent protected API calls.
+
+================================================================================
+3. POSTING A LISTING WORKFLOW
+================================================================================
+
+User Action: A logged-in user wants to sell a textbook. They go to the 
+CreateListingPage.jsx, fill in the details, upload an image, and submit.
+
+1.  [Frontend] Image Processing: If the user uploaded an image, the browser reads 
+    it and converts it into a Base64 string for easier transmission.
+2.  [Frontend] API Call: React makes an HTTP POST request to `/api/listings`. 
+    Because the user is logged in, the JWT token is attached to the request headers.
+3.  [Backend] Authentication Middleware (`auth.js`): Before the route runs, 
+    Express intercepts the request, grabs the JWT from the header, verifies its 
+    signature, and decodes the user's unique ID. It attaches this ID to the request.
+4.  [Backend] Data Validation: The server validates the listing data (e.g., price > 0, 
+    valid category).
+5.  [Backend] Database Insert: Mongoose creates a new document in the "Listings" 
+    collection, permanently linking the listing to the `seller_id` (the ID decoded 
+    from the JWT).
+6.  [Backend] Response: The server responds with the newly created listing object.
+7.  [Frontend] UI Update: React shows a success toast notification and redirects 
+    the user to the newly created listing's detail page.
+
+================================================================================
+4. VIEWING AND BROWSING LISTINGS
+================================================================================
+
+User Action: The user visits the homepage or browse page to see available items.
+
+1.  [Frontend] Initial Load: The `BrowsePage.jsx` component mounts.
+2.  [Frontend] API Call: A `useEffect` hook triggers an HTTP GET to `/api/listings`.
+3.  [Backend] Database Query: Mongoose finds all listings with status="Available". 
+    It "populates" the seller's information (username, trust_score) by referencing 
+    the "Users" collection.
+4.  [Backend] Response: Returns a JSON array of listing objects.
+5.  [Frontend] Render: React receives the array and dynamically renders a listing 
+    card for each item using the data.
+
+================================================================================
+5. INITIATING A CHAT & REAL-TIME MESSAGING
+================================================================================
+
+User Action: A buyer looks at a seller's listing and clicks "Message Seller". 
+
+Phase A: Setting up the Chat Room (HTTP)
+----------------------------------------
+1.  [Frontend] API Call: React makes an HTTP POST request to `/api/chat/rooms` 
+    with the `listing_id` and the `seller_id`.
+2.  [Backend] Room Check/Create: The server checks if a MongoDB "ChatRooms" document 
+    already exists between this specific buyer, seller, and listing. If not, it 
+    creates one.
+3.  [Backend] Encryption Setup: A unique AES-256-GCM encryption key is derived 
+    for this specific room.
+4.  [Backend] Response: The server returns the `room_id` and past messages (if any).
+5.  [Frontend] Navigation: React routes the user to `ChatPage.jsx?room=<room_id>`.
+
+Phase B: Real-Time Communication (WebSocket via Socket.IO)
+----------------------------------------------------------
+1.  [Frontend] Connection: The React component tells the Socket.IO client (`socket.js`) 
+    to connect to the server.
+2.  [Frontend] Join Room: The client emits a "join_room" event with the `room_id`.
+3.  [Backend] Room Assignment: The Node.js server receives the event and places 
+    the user's socket connection into that specific Socket.IO room.
+4.  [Frontend] Send Message: The buyer types "Is this still available?" and hits send. 
+    React emits a "send_message" event containing the text and `room_id`.
+5.  [Backend] Encryption & Storage: 
+    - The Node.js server receives the plaintext message.
+    - It uses the Node `crypto` module to encrypt the text (AES-256-GCM) specifically 
+      for that room, generating a `ciphertext`, `iv` (Initialization Vector), and `tag`.
+    - Mongoose saves this encrypted blob into the "Messages" collection.
+6.  [Backend] Broadcasting: The server emits a "new_message" event containing the 
+    DECRYPTED text *only* to sockets joined to that specific `room_id`.
+7.  [Frontend] UI Update (Seller): If the seller is online and in the room, their 
+    React client listens for "new_message", receives the event, and immediately 
+    updates their state, causing the new message bubble to pop up on their screen without a refresh.
+8.  [Frontend] Typing Events: Similar to messages, when a user presses a key, 
+    React emits "typing", the server broadcasts "user_typing" to the room, and 
+    the recipient's UI shows an animated "... typing" indicator.

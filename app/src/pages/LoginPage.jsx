@@ -117,7 +117,7 @@ export default function LoginPage({ onLogin }) {
             animate="visible"
           >
             <motion.div
-              className="neo-card bg-white"
+              className="neo-card"
               variants={itemVariants}
               whileHover={{ scale: 1.05 }}
             >
@@ -154,7 +154,8 @@ export default function LoginPage({ onLogin }) {
 
       {/* Right Side - Auth Form */}
       <motion.div
-        className="lg:w-1/2 bg-[hsl(60,100%,97%)] p-8 lg:p-16 flex flex-col justify-center"
+        className="lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center transition-colors duration-300"
+        style={{ background: "hsl(var(--neo-overlay))" }}
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -168,7 +169,7 @@ export default function LoginPage({ onLogin }) {
             <h2 className="text-3xl font-bold mb-2">
               {isSignUp ? "Create Account" : "Welcome Back"}
             </h2>
-            <p className="text-gray-600 mb-8">
+            <p style={{ color: "hsl(var(--neo-text-muted))" }}>
               {isSignUp
                 ? "Sign up with your @vit.edu email"
                 : "Sign in to access the marketplace"}
@@ -207,7 +208,7 @@ export default function LoginPage({ onLogin }) {
                     required
                   />
 
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium" style={{ color: "hsl(var(--neo-text-muted))" }}>
                     @vit.edu
                   </span>
                 </div>
@@ -279,7 +280,7 @@ export default function LoginPage({ onLogin }) {
             </form>
 
             <div className="mt-8 text-center">
-              <p className="text-gray-600">
+              <p style={{ color: "hsl(var(--neo-text-muted))" }}>
                 {isSignUp
                   ? "Already have an account?"
                   : "Don't have an account?"}
@@ -297,7 +298,7 @@ export default function LoginPage({ onLogin }) {
               </p>
             </div>
 
-            <div className="mt-8 p-4 bg-[hsl(var(--neo-yellow))] border-4 border-black">
+            <div className="mt-8 p-4 bg-[hsl(var(--neo-yellow))] border-4 border-[hsl(var(--neo-border))] text-black">
               <p className="font-bold text-sm flex items-center gap-2">
                 <Shield className="w-5 h-5" />
                 VIT Students Only

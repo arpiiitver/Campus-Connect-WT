@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:5000";
+const SOCKET_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000";
 
 let socket = null;
 
@@ -140,5 +140,38 @@ export function onUserStoppedTyping(callback) {
   s.on("user_stopped_typing", callback);
   return () => {
     s.off("user_stopped_typing", callback);
+  };
+}
+
+/**
+ * Listen for edited messages.
+ */
+export function onMessageEdited(callback) {
+  const s = getSocket();
+  s.on("message_edited", callback);
+  return () => {
+    s.off("message_edited", callback);
+  };
+}
+
+/**
+ * Listen for deleted messages.
+ */
+export function onMessageDeleted(callback) {
+  const s = getSocket();
+  s.on("message_deleted", callback);
+  return () => {
+    s.off("message_deleted", callback);
+  };
+}
+
+/**
+ * Listen for entire chat deletion.
+ */
+export function onChatDeleted(callback) {
+  const s = getSocket();
+  s.on("chat_deleted", callback);
+  return () => {
+    s.off("chat_deleted", callback);
   };
 }

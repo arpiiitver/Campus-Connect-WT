@@ -9,18 +9,34 @@ import {
   Lock,
   ChevronRight,
   Loader2,
+  Paperclip,
+  Trash2,
+  Edit2,
+  X,
+  MoreVertical,
 } from "lucide-react";
-import { apiGetMyRooms, apiGetRoomMessages, apiSendMessage } from "@/lib/api";
+import { 
+  apiGetMyRooms, 
+  apiGetRoomMessages, 
+  apiSendMessage,
+  apiUploadChatMedia,
+  apiEditMessage,
+  apiDeleteMessage,
+  apiDeleteChat,
+  SERVER_URL
+} from "@/lib/api";
 import {
   connectSocket,
   disconnectSocket,
   joinRoom,
   leaveRoom,
-  emitTyping,
   emitStopTyping,
   onNewMessage,
   onUserTyping,
   onUserStoppedTyping,
+  onMessageEdited,
+  onMessageDeleted,
+  onChatDeleted,
 } from "@/lib/socket";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
@@ -37,9 +53,15 @@ export default function ChatPage({ user, chatId, onBack }) {
   const [typingUser, setTypingUser] = useState(null);
   const [showMobileChat, setShowMobileChat] = useState(!!chatId);
 
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [activeMessageOptions, setActiveMessageOptions] = useState(null);
+
   const messagesEndRef = useRef(null);
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const userId = (user._id || user.id)?.toString();
 
@@ -110,10 +132,38 @@ export default function ChatPage({ user, chatId, onBack }) {
       }
     });
 
+    const unsubEdited = onMessageEdited((msg) => {
+      if (msg.sender_id !== userId) {
+        setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
+      }
+    });
+
+    const unsubDeleted = onMessageDeleted((data) => {
+      setMessages((prev) => prev.map((m) => {
+        if (m.id === data.id) {
+          return { ...m, is_deleted: true, media_url: null, media_type: null, text: "" };
+        }
+        return m;
+      }));
+    });
+
+    const unsubChatDeleted = onChatDeleted((data) => {
+      if (data.room_id === activeRoomId) {
+        toast.error("This conversation was deleted.");
+        handleBackToList();
+        fetchRooms();
+      } else {
+        fetchRooms();
+      }
+    });
+
     return () => {
       unsubMessage();
       unsubTyping();
       unsubStopTyping();
+      unsubEdited();
+      unsubDeleted();
+      unsubChatDeleted();
     };
   }, [activeRoomId, userId]);
 
@@ -178,53 +228,112 @@ export default function ChatPage({ user, chatId, onBack }) {
   };
 
   const handleSendMessage = useCallback(async () => {
-    if (!newMessage.trim() || !activeRoomId || isSending) return;
+    if ((!newMessage.trim() && !mediaFile) || !activeRoomId || isSending) return;
+
+    if (editingMessageId) {
+      // Handle Edit Action
+      setIsSending(true);
+      try {
+        const res = await apiEditMessage(activeRoomId, editingMessageId, newMessage.trim());
+        setMessages((prev) => prev.map((m) => (m.id === editingMessageId ? { ...m, ...res } : m)));
+        setEditingMessageId(null);
+        setNewMessage("");
+        toast.success("Message edited successfully.");
+      } catch(e) { 
+        toast.error("Failed to edit message."); 
+      } finally { 
+        setIsSending(false); 
+      }
+      return;
+    }
 
     const messageText = newMessage.trim();
+    const currentMedia = mediaFile;
+    const currentPreview = mediaPreview;
+
     setNewMessage("");
+    clearMedia();
     setIsSending(true);
     emitStopTyping(activeRoomId);
 
-    // Optimistic: show the message immediately with a temporary ID
+    // Optimistic message
     const tempId = `optimistic-${Date.now()}`;
     const optimisticMsg = {
       id: tempId,
       room_id: activeRoomId,
       sender_id: userId,
       text: messageText,
+      media_url: currentPreview?.url,
+      media_type: currentPreview?.type,
       created_at: new Date().toISOString(),
       sender: { username: user.username, avatar_url: user.avatar_url },
     };
     setMessages((prev) => [...prev, optimisticMsg]);
-
-    // Also update sidebar optimistically
     updateRoomSidebar(optimisticMsg);
 
     try {
-      // Send via REST API — reliable, returns the saved message
-      const savedMsg = await apiSendMessage(activeRoomId, messageText);
+      let uploadedMediaUrl = null;
+      let uploadedMediaType = currentPreview?.type || null;
 
-      // Replace optimistic message with the real server-confirmed message
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...savedMsg } : m)),
-      );
+      if (currentMedia) {
+        const res = await apiUploadChatMedia(activeRoomId, currentMedia);
+        uploadedMediaUrl = res.url;
+      }
+
+      const savedMsg = await apiSendMessage(activeRoomId, messageText, uploadedMediaUrl, uploadedMediaType);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...savedMsg } : m)));
     } catch (error) {
-      // Remove optimistic message on failure
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       toast.error(error.message || "Failed to send message");
     } finally {
       setIsSending(false);
-      // Re-focus input
       messageInputRef.current?.focus();
     }
   }, [
-    newMessage,
-    activeRoomId,
-    isSending,
-    userId,
-    user.username,
-    user.avatar_url,
+    newMessage, mediaFile, activeRoomId, isSending, userId, user.username, user.avatar_url, editingMessageId, mediaPreview
   ]);
+
+  const handleMediaSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("File is too large (max 25MB).");
+      return;
+    }
+    setMediaFile(file);
+    const url = URL.createObjectURL(file);
+    setMediaPreview({ url, type: file.type.startsWith('video/') ? 'video' : 'image' });
+  };
+  
+  const clearMedia = () => {
+    setMediaFile(null);
+    if (mediaPreview) URL.revokeObjectURL(mediaPreview.url);
+    setMediaPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleDeleteMessage = async (msgId) => {
+    try {
+      await apiDeleteMessage(activeRoomId, msgId);
+      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, is_deleted: true, text: "", media_url: null, media_type: null, is_edited: false } : m));
+      toast.success("Message deleted");
+    } catch (error) {
+      toast.error("Failed to delete message");
+    }
+    setActiveMessageOptions(null);
+  };
+
+  const handleDeleteChat = async () => {
+    if (!window.confirm("Are you sure you want to delete this chat completely? This action is permanent and applies to both you and the other user.")) return;
+    try {
+      await apiDeleteChat(activeRoomId);
+      toast.success("Chat deleted successfully");
+      handleBackToList();
+      fetchRooms();
+    } catch (e) {
+      toast.error("Failed to delete chat");
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -307,20 +416,21 @@ export default function ChatPage({ user, chatId, onBack }) {
   const renderConversationList = () => (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b-4 border-black bg-white">
+      <div className="p-4 border-b-4 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface))" }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <motion.button
               onClick={onBack}
-              className="p-2 hover:bg-gray-100 rounded-lg md:hidden"
-              whileHover={{ scale: 1.1 }}
+              className="p-2 rounded-lg md:hidden"
+              style={{ color: "hsl(var(--neo-text))" }}
+              whileHover={{ scale: 1.1, background: "hsl(var(--neo-surface-raised))" }}
               whileTap={{ scale: 0.9 }}
             >
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
             <h2 className="text-2xl font-bold">Messages</h2>
           </div>
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs" style={{ color: "hsl(var(--neo-text-muted))" }}>
             <Lock className="w-3 h-3" />
             <span>Encrypted</span>
           </div>
@@ -328,7 +438,7 @@ export default function ChatPage({ user, chatId, onBack }) {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "hsl(var(--neo-text-muted))" }} />
           <input
             type="text"
             value={searchQuery}
@@ -352,7 +462,7 @@ export default function ChatPage({ user, chatId, onBack }) {
         ) : filteredRooms.length === 0 ? (
           <div className="text-center py-16 px-6">
             <motion.div
-              className="w-20 h-20 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-black"
+              className="w-20 h-20 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-[hsl(var(--neo-border))]"
               animate={{ scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
@@ -361,7 +471,7 @@ export default function ChatPage({ user, chatId, onBack }) {
             <h3 className="text-xl font-bold mb-2">
               {rooms.length === 0 ? "No conversations yet" : "No results"}
             </h3>
-            <p className="text-gray-500 text-sm">
+            <p style={{ color: "hsl(var(--neo-text-muted))" }} className="text-sm">
               {rooms.length === 0
                 ? "When you contact a seller about a listing, your conversation will appear here."
                 : "Try a different search term."}
@@ -378,15 +488,19 @@ export default function ChatPage({ user, chatId, onBack }) {
                 <motion.div
                   key={roomId}
                   onClick={() => selectRoom(room)}
-                  className={`flex items-center gap-3 p-4 cursor-pointer border-b-2 border-gray-100 transition-colors ${
+                  className={`flex items-center gap-3 p-4 cursor-pointer border-b-2 transition-colors ${
                     isActive
-                      ? "bg-[hsl(var(--neo-yellow))]"
-                      : "hover:bg-gray-50"
+                      ? "bg-[hsl(var(--neo-yellow))] text-black"
+                      : ""
                   }`}
+                  style={{
+                    borderColor: "hsl(var(--neo-border))",
+                    ...(!isActive ? { background: "hsl(var(--neo-surface))" } : {}),
+                  }}
                   whileTap={{ scale: 0.98 }}
                 >
                   {/* Avatar */}
-                  <div className="w-12 h-12 bg-[hsl(var(--neo-blue))] rounded-full flex items-center justify-center border-3 border-black flex-shrink-0">
+                  <div className="w-12 h-12 bg-[hsl(var(--neo-blue))] rounded-full flex items-center justify-center border-3 border-[hsl(var(--neo-border))] flex-shrink-0">
                     <span className="font-bold text-white text-lg">
                       {other.username[0]?.toUpperCase()}
                     </span>
@@ -398,7 +512,7 @@ export default function ChatPage({ user, chatId, onBack }) {
                       <span className="font-bold text-sm truncate">
                         {other.username}
                       </span>
-                      <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
                         {formatRoomTime(
                           room.last_message?.created_at || room.last_message_at,
                         )}
@@ -406,22 +520,22 @@ export default function ChatPage({ user, chatId, onBack }) {
                     </div>
 
                     {/* Listing tag */}
-                    <p className="text-xs text-gray-500 truncate mb-0.5 flex items-center gap-1">
+                    <p className="text-xs truncate mb-0.5 flex items-center gap-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       <ShoppingBag className="w-3 h-3 flex-shrink-0" />
                       {room.listing?.title || "Unknown listing"}
                     </p>
 
                     {/* Last message preview */}
-                    <p className="text-xs text-gray-600 truncate">
+                    <p className="text-xs truncate" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       {room.last_message
                         ? (room.last_message.sender_id?.toString() === userId
                             ? "You: "
-                            : "") + room.last_message.text
+                            : "") + (room.last_message.is_deleted ? "🚫 Message deleted" : (room.last_message.media_url ? "📷 Media" : room.last_message.text))
                         : "No messages yet"}
                     </p>
                   </div>
 
-                  <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 md:hidden" />
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 md:hidden" style={{ color: "hsl(var(--neo-text-muted))" }} />
                 </motion.div>
               );
             })}
@@ -439,16 +553,17 @@ export default function ChatPage({ user, chatId, onBack }) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center p-6">
           <motion.div
-            className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 border-4 border-gray-200"
+            className="w-24 h-24 rounded-full flex items-center justify-center mb-4 border-4" 
+            style={{ background: "hsl(var(--neo-surface-raised))", borderColor: "hsl(var(--neo-border))" }}
             animate={{ scale: [1, 1.03, 1] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
-            <MessageCircle className="w-12 h-12 text-gray-400" />
+            <MessageCircle className="w-12 h-12" style={{ color: "hsl(var(--neo-text-muted))" }} />
           </motion.div>
-          <h3 className="text-xl font-bold text-gray-500 mb-2">
+          <h3 className="text-xl font-bold mb-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
             Select a conversation
           </h3>
-          <p className="text-gray-400 text-sm">
+          <p className="text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
             Choose a conversation from the list to start messaging
           </p>
         </div>
@@ -460,17 +575,18 @@ export default function ChatPage({ user, chatId, onBack }) {
     return (
       <div className="flex flex-col h-full">
         {/* Chat Header */}
-        <div className="p-4 border-b-4 border-black bg-white flex items-center gap-3">
+        <div className="p-4 border-b-4 border-[hsl(var(--neo-border))] flex items-center gap-3" style={{ background: "hsl(var(--neo-surface))" }}>
           <motion.button
             onClick={handleBackToList}
-            className="p-2 hover:bg-gray-100 rounded-lg md:hidden"
-            whileHover={{ scale: 1.1 }}
+            className="p-2 rounded-lg md:hidden"
+            style={{ color: "hsl(var(--neo-text))" }}
+            whileHover={{ scale: 1.1, background: "hsl(var(--neo-surface-raised))" }}
             whileTap={{ scale: 0.9 }}
           >
             <ArrowLeft className="w-5 h-5" />
           </motion.button>
 
-          <div className="w-10 h-10 bg-[hsl(var(--neo-blue))] rounded-full flex items-center justify-center border-3 border-black flex-shrink-0">
+          <div className="w-10 h-10 bg-[hsl(var(--neo-blue))] rounded-full flex items-center justify-center border-3 border-[hsl(var(--neo-border))] flex-shrink-0">
             <span className="font-bold text-white">
               {other.username[0]?.toUpperCase()}
             </span>
@@ -478,35 +594,43 @@ export default function ChatPage({ user, chatId, onBack }) {
 
           <div className="flex-1 min-w-0">
             <p className="font-bold truncate">{other.username}</p>
-            <p className="text-xs text-gray-500 truncate flex items-center gap-1">
+            <p className="text-xs truncate flex items-center gap-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
               <ShoppingBag className="w-3 h-3" />
               {activeRoom.listing?.title} · ₹{activeRoom.listing?.price}
             </p>
           </div>
 
-          <div className="flex items-center gap-1 text-xs px-2 py-1 bg-[hsl(var(--neo-green))] text-white border-2 border-black">
+          <div className="flex items-center gap-1 text-xs px-2 py-1 bg-[hsl(var(--neo-green))] text-white border-2 border-[hsl(var(--neo-border))] hidden sm:flex">
             <Lock className="w-3 h-3" />
             <span className="font-bold">E2E</span>
           </div>
+
+          <button 
+            onClick={handleDeleteChat} 
+            className="p-2 ml-2 hover:bg-red-100 text-red-600 rounded-lg border-2 border-transparent hover:border-red-600 transition-colors" 
+            title="Delete Conversation"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Listing Context Bar */}
         {activeRoom.listing && (
-          <div className="px-4 py-2 bg-[hsl(60,100%,97%)] border-b-2 border-black flex items-center gap-3 text-sm">
+          <div className="px-4 py-2 border-b-2 border-[hsl(var(--neo-border))] flex items-center gap-3 text-sm" style={{ background: "hsl(var(--neo-surface-raised))" }}>
             {activeRoom.listing.image_url ? (
               <img
                 src={activeRoom.listing.image_url}
                 alt=""
-                className="w-10 h-10 object-cover border-2 border-black flex-shrink-0"
+                className="w-10 h-10 object-cover border-2 border-[hsl(var(--neo-border))] flex-shrink-0"
               />
             ) : (
-              <div className="w-10 h-10 bg-gray-200 border-2 border-black flex items-center justify-center flex-shrink-0">
-                <ShoppingBag className="w-5 h-5 text-gray-400" />
+              <div className="w-10 h-10 border-2 border-[hsl(var(--neo-border))] flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                <ShoppingBag className="w-5 h-5" style={{ color: "hsl(var(--neo-text-muted))" }} />
               </div>
             )}
             <div className="flex-1 min-w-0">
               <p className="font-bold truncate">{activeRoom.listing.title}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs" style={{ color: "hsl(var(--neo-text-muted))" }}>
                 {activeRoom.listing.type === "Sell" ? "For Sale" : "For Rent"} ·{" "}
                 {activeRoom.listing.category}
                 {activeRoom.listing.status !== "Available" && (
@@ -523,7 +647,7 @@ export default function ChatPage({ user, chatId, onBack }) {
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[hsl(60,100%,97%)]">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ background: "hsl(var(--neo-overlay))" }}>
           {isLoadingMessages ? (
             <div className="flex items-center justify-center py-20">
               <motion.div
@@ -534,13 +658,13 @@ export default function ChatPage({ user, chatId, onBack }) {
             </div>
           ) : messages.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-16 h-16 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center mx-auto mb-4 border-3 border-black">
+              <div className="w-16 h-16 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center mx-auto mb-4 border-3 border-[hsl(var(--neo-border))] text-black">
                 <Lock className="w-8 h-8" />
               </div>
-              <p className="text-gray-500 text-sm mb-1">
+              <p className="text-sm mb-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
                 Messages are end-to-end encrypted
               </p>
-              <p className="text-gray-400 text-xs">
+              <p className="text-xs" style={{ color: "hsl(var(--neo-text-muted))" }}>
                 Say hi to start the conversation!
               </p>
             </div>
@@ -548,7 +672,7 @@ export default function ChatPage({ user, chatId, onBack }) {
             <>
               {/* Encryption notice */}
               <div className="text-center mb-4">
-                <span className="inline-flex items-center gap-1 text-xs text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+                <span className="inline-flex items-center gap-1 text-xs px-3 py-1 rounded-full" style={{ color: "hsl(var(--neo-text-muted))", background: "hsl(var(--neo-surface))", border: "1px solid hsl(var(--neo-border))" }}>
                   <Lock className="w-3 h-3" />
                   Messages are encrypted with AES-256-GCM
                 </span>
@@ -569,7 +693,7 @@ export default function ChatPage({ user, chatId, onBack }) {
                   <div key={msg.id}>
                     {showTime && (
                       <div className="text-center my-4">
-                        <span className="text-xs text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-200">
+                        <span className="text-xs px-3 py-1 rounded-full" style={{ color: "hsl(var(--neo-text-muted))", background: "hsl(var(--neo-surface))", border: "1px solid hsl(var(--neo-border))" }}>
                           {formatMessageTime(msg.created_at)}
                         </span>
                       </div>
@@ -585,22 +709,54 @@ export default function ChatPage({ user, chatId, onBack }) {
                       transition={{ duration: 0.2 }}
                       className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                     >
-                      <div
-                        className={`chat-bubble ${
-                          isMine ? "chat-bubble-sent" : "chat-bubble-received"
-                        }`}
-                      >
+                      <div className={`chat-bubble ${isMine ? "chat-bubble-sent" : "chat-bubble-received"} relative group max-w-[85%]`}>
+                        
+                        {/* Options Menu Toggle */}
+                        {isMine && !msg.is_deleted && !isOptimistic && (
+                           <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => setActiveMessageOptions(activeMessageOptions === msg.id ? null : msg.id)} className="p-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                              {activeMessageOptions === msg.id && (
+                                <div className="absolute right-0 top-6 border-2 border-[hsl(var(--neo-border))] shadow-[2px_2px_0px_hsla(var(--neo-shadow-color),0.5)] rounded z-10 w-24" style={{ background: "hsl(var(--neo-surface))" }}>
+                                  <button onClick={() => { setEditingMessageId(msg.id); setNewMessage(msg.text); setActiveMessageOptions(null); messageInputRef.current?.focus(); }} className="w-full text-left px-3 py-1.5 text-sm border-b-2 border-[hsl(var(--neo-border))] flex items-center gap-2" style={{ color: "hsl(var(--neo-text))" }}><Edit2 className="w-3 h-3"/> Edit</button>
+                                  <button onClick={() => handleDeleteMessage(msg.id)} className="w-full text-left px-3 py-1.5 text-sm hover:bg-red-100 text-red-600 flex items-center gap-2"><Trash2 className="w-3 h-3"/> Delete</button>
+                                </div>
+                              )}
+                           </div>
+                        )}
+
                         {!isMine && (
                           <p className="text-xs font-bold text-[hsl(var(--neo-blue))] mb-1">
                             {msg.sender?.username}
                           </p>
                         )}
-                        <p className="text-sm whitespace-pre-wrap break-words">
-                          {msg.text}
-                        </p>
-                        <p
-                          className={`text-[10px] mt-1 ${isMine ? "text-gray-600" : "text-gray-400"} text-right`}
-                        >
+                        
+                        {msg.is_deleted ? (
+                           <p className="text-sm italic flex items-center gap-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
+                             <Lock className="w-3 h-3" /> This message was deleted
+                           </p>
+                        ) : (
+                          <>
+                            {msg.media_url && (
+                               <div className="mb-2 border-2 border-[hsl(var(--neo-border))] rounded overflow-hidden mt-1">
+                                 {msg.media_type === 'video' ? (
+                                    <video src={msg.media_url.startsWith('blob:') ? msg.media_url : `${SERVER_URL}${msg.media_url}`} controls className="max-w-full h-auto max-h-60" />
+                                 ) : (
+                                    <img src={msg.media_url.startsWith('blob:') ? msg.media_url : `${SERVER_URL}${msg.media_url}`} alt="Attached media" className="max-w-full h-auto max-h-60 object-contain bg-black/5" />
+                                 )}
+                               </div>
+                            )}
+                            {msg.text && (
+                              <p className="text-sm whitespace-pre-wrap break-words pr-4">
+                                {msg.text}
+                              </p>
+                            )}
+                          </>
+                        )}
+
+                        <p className="text-[10px] mt-1 text-right" style={{ color: "hsl(var(--neo-text-muted))" }}>
+                          {msg.is_edited && <span className="italic mr-1">(edited)</span>}
                           {isOptimistic
                             ? "Sending..."
                             : msg.created_at
@@ -626,7 +782,7 @@ export default function ChatPage({ user, chatId, onBack }) {
               >
                 <div className="chat-bubble chat-bubble-received">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       {typingUser} is typing
                     </span>
                     <motion.div className="flex gap-1">
@@ -653,25 +809,67 @@ export default function ChatPage({ user, chatId, onBack }) {
         </div>
 
         {/* Message Input */}
-        <div className="p-4 border-t-4 border-black bg-white">
+        <div className="p-4 border-t-4 border-[hsl(var(--neo-border))] flex flex-col gap-2 relative" style={{ background: "hsl(var(--neo-surface))" }}>
+          
+          {editingMessageId && (
+            <div className="flex items-center justify-between bg-blue-50 border-2 border-[hsl(var(--neo-blue))] p-2 rounded text-sm text-[hsl(var(--neo-blue))]">
+               <span className="flex items-center gap-2">
+                 <Edit2 className="w-4 h-4"/> Editing message {messages.find(m => m.id === editingMessageId)?.text?.substring(0, 30)}...
+               </span>
+               <button onClick={() => { setEditingMessageId(null); setNewMessage(""); }} className="hover:bg-blue-100 p-1 rounded"><X className="w-4 h-4" /></button>
+            </div>
+          )}
+
+          {mediaPreview && (
+            <div className="relative inline-block w-24 h-24 border-2 border-[hsl(var(--neo-border))] rounded shadow-[2px_2px_0px_hsla(var(--neo-shadow-color),0.5)]">
+              {mediaPreview.type === 'video' ? (
+                 <video src={mediaPreview.url} className="w-full h-full object-cover" />
+              ) : (
+                 <img src={mediaPreview.url} alt="Preview" className="w-full h-full object-cover" />
+              )}
+              <button 
+                onClick={clearMedia} 
+                title="Remove Media"
+                className="absolute -top-2 -right-2 bg-red-500 text-white border-2 border-[hsl(var(--neo-border))] w-6 h-6 flex items-center justify-center rounded-full shadow-[2px_2px_0px_hsla(var(--neo-shadow-color),0.5)] hover:bg-red-600 z-10"
+              >
+                 <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="flex gap-2 items-center">
+            {!editingMessageId && (
+              <>
+                <input type="file" accept="image/*,video/*" className="hidden" ref={fileInputRef} onChange={handleMediaSelect} />
+                <motion.button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="neo-button p-3 bg-gray-100 hover:bg-gray-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  title="Attach Photo or Video"
+                >
+                  <Paperclip className="w-5 h-5" style={{ color: "hsl(var(--neo-text-muted))" }} />
+                </motion.button>
+              </>
+            )}
+
             <input
               ref={messageInputRef}
               type="text"
               value={newMessage}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
+              placeholder={editingMessageId ? "Edit your message..." : "Type a message..."}
               className="neo-input flex-1 py-3"
               maxLength={2000}
             />
 
             <motion.button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isSending}
+              disabled={(!newMessage.trim() && !mediaFile) || isSending}
               className="neo-button neo-button-primary p-3 disabled:opacity-40 disabled:cursor-not-allowed"
-              whileHover={newMessage.trim() ? { scale: 1.05 } : {}}
-              whileTap={newMessage.trim() ? { scale: 0.95 } : {}}
+              whileHover={(newMessage.trim() || mediaFile) ? { scale: 1.05 } : {}}
+              whileTap={(newMessage.trim() || mediaFile) ? { scale: 0.95 } : {}}
             >
               {isSending ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -690,14 +888,14 @@ export default function ChatPage({ user, chatId, onBack }) {
   // ═══════════════════════════════════════════════════
   return (
     <div
-      className="h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex flex-col md:flex-row bg-white border-4 border-black mx-2 md:mx-6 my-2 md:my-4"
-      style={{ boxShadow: "8px 8px 0 0 black" }}
+      className="h-[calc(100vh-5rem)] md:h-[calc(100vh-5rem)] flex flex-col md:flex-row border-4 border-[hsl(var(--neo-border))] mx-2 md:mx-6 my-2 md:my-4 transition-colors duration-300"
+      style={{ boxShadow: "8px 8px 0 0 hsla(var(--neo-shadow-color), 0.5)", background: "hsl(var(--neo-surface))" }}
     >
       {/* Conversation List — always visible on desktop, toggled on mobile */}
       <div
         className={`${
           showMobileChat ? "hidden md:flex" : "flex"
-        } flex-col w-full md:w-[380px] md:border-r-4 md:border-black h-full`}
+        } flex-col w-full md:w-[380px] md:border-r-4 md:border-[hsl(var(--neo-border))] h-full`}
       >
         {renderConversationList()}
       </div>

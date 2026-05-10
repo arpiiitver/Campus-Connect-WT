@@ -5,6 +5,8 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const listingRoutes = require('./routes/listings');
@@ -19,8 +21,10 @@ const { deriveRoomKey, encryptMessage, decryptMessage } = require('./utils/crypt
 const app = express();
 const server = http.createServer(app);
 
-// ── CORS origins ────────────────────────────────────────
 const CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
+if (process.env.CLIENT_URL) {
+  CORS_ORIGINS.push(process.env.CLIENT_URL);
+}
 
 // ── Middleware ──────────────────────────────────────────────
 app.use(cors({
@@ -28,8 +32,15 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// ── Static Files ──────────────────────────────────────────
+const uploadDir = path.join(__dirname, 'uploads', 'chat');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Socket.IO Setup ─────────────────────────────────────
 const io = new Server(server, {

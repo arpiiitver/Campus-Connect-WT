@@ -1,0 +1,64 @@
+# CAMPUS CONNECT - PRESENTATION MASTER DECK (10 SLIDES)
+
+## SLIDE 1: TITLE & PROJECT OVERVIEW
+*   **Project Name:** Campus Connect
+*   **The Problem:** Fragmented and unsafe peer-to-peer trading in collegiate environments.
+*   **Our Solution:** A niche, verified MERN-stack marketplace with real-time communication and administrative oversight.
+*   **Tech Stack:** MongoDB, Express.js, React, Node.js, Socket.io, JWT.
+
+---
+
+## SLIDE 2: APOORV - SECURE AUTHENTICATION & IDENTITY
+*   **Verification Engine:** Custom logic for `@vit.edu` email verification to ensure an "Invite-Only" campus ecosystem.
+*   **JWT Architecture:** Stateless authentication flow with secure token management for persistent sessions.
+*   **Data Integrity:** Implemented **Bcrypt** hashing with adaptive salt rounds for industry-standard password protection.
+*   **Trust Scoring:** Designed User schemas to track engagement and trust scores, minimizing fraudulent activity.
+
+## SLIDE 3: APOORV - FOUNDATIONAL UI & DESIGN SYSTEM
+*   **Global Design Tokens:** Engineered a unified CSS variable system for colors, spacing, and neobrutalist borders.
+*   **Component Library:** Developed reusable buttons, inputs, and card components to maintain 100% UI consistency across the team.
+*   **User Hub:** Created the core Signup/Login flows, Profile Editor, and User Dashboard interfaces.
+
+---
+
+## SLIDE 4: ARPIT - MARKETPLACE INFRASTRUCTURE (BACKEND)
+*   **Listing API:** Developed complex query logic for faceted searches (Price ranges, Item conditions, Rent vs. Sell).
+*   **Metadata Modeling:** Designed a flexible MongoDB Listing schema to handle diverse product categories.
+*   **Query Optimization:** Implemented database indexing strategy to ensure millisecond response times for marketplace browsing.
+
+## SLIDE 5: ARPIT - BROWSE EXPERIENCE & DATA INGESTION
+*   **Dynamic Discovery:** Built the "Browse Page" featuring a responsive grid and real-time category "pill" filtering.
+*   **Multi-Part Uploads:** Engineered a robust multi-step form for item listings, handling structured data and media.
+*   **Client-Side Validation:** Integrated image validation logic to prevent oversized or invalid uploads before they hit the server.
+
+---
+
+## SLIDE 6: AANYA - REAL-TIME CHAT ARCHITECTURE (SOCKET.IO)
+*   **Event Architecture:** Engineered a custom Socket.io system for seamless Room Joins, Message Broadcasts, and Presence Tracking.
+*   **Low-Latency Retrieval:** Designed optimized ChatRoom and Message schemas for rapid historical data fetching.
+*   **Message Persistence:** Developed per-room logic to ensure 100% chat history retention for offline users.
+
+## SLIDE 7: AANYA - INTERACTIVE MESSAGING EXPERIENCE
+*   **Smooth UX:** Implemented auto-scrolling message lists with sticky headers for effortless navigation.
+*   **Typing Indicators:** Integrated real-time "typing..." animations to boost user engagement and interactivity.
+*   **Visual Feedback:** Built a modern chat UI that mirrors premium messaging apps like WhatsApp/Telegram.
+
+---
+
+## SLIDE 8: ABHIJEET - ADMINISTRATIVE OVERSIGHT & MODERATION
+*   **Moderation API:** Created secure endpoints for admins to review flagged reports and execute Ban/Unban actions.
+*   **Conflict Workflow:** Engineered the "Action/Dismiss" logic to streamline the transition from user complaint to admin resolution.
+*   **Security:** Enforced role-based access control (RBAC) to protect administrative routes.
+
+## SLIDE 9: ABHIJEET - PLATFORM ANALYTICS & VISUALIZATION
+*   **Growth Dashboard:** Integrated **Recharts** to visualize daily listing trends and user registration metrics.
+*   **Aggregation Pipelines:** Utilized MongoDB’s advanced aggregation framework to generate real-time platform health stats.
+*   **Operational Intelligence:** Provided admins with a data-driven view of marketplace activity and report hotspots.
+
+---
+
+## SLIDE 10: CONCLUSION & FUTURE IMPACT
+*   **Key Achievement:** A fully functional, secure, and real-time collegiate ecosystem built in record time.
+*   **Team Synergy:** 4 Developers, 1 Design System, 0 Layout inconsistencies.
+*   **Future Scope:** AI-driven price suggestions, integrated escrow payments, and cross-campus scaling.
+*   **Closing:** "Campus Connect: Trading Trust, One Student at a Time."

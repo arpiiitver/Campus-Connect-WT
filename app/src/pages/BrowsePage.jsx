@@ -106,7 +106,7 @@ export default function BrowsePage({ user, onListingClick }) {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-4xl font-bold mb-2">Browse Listings</h1>
-            <p className="text-gray-600">
+            <p style={{ color: "hsl(var(--neo-text-muted))" }}>
               Find what you need from fellow VIT students
             </p>
           </div>
@@ -162,11 +162,12 @@ export default function BrowsePage({ user, onListingClick }) {
             <motion.button
               key={cat.value}
               onClick={() => setSelectedCategory(cat.value)}
-              className={`px-4 py-2 font-bold text-sm border-3 border-black transition-all ${
+              className={`px-4 py-2 font-bold text-sm border-3 border-[hsl(var(--neo-border))] transition-all ${
                 selectedCategory === cat.value
-                  ? `${cat.color} shadow-[3px_3px_0_0_black]`
-                  : "bg-white hover:shadow-[2px_2px_0_0_black]"
+                  ? `${cat.color} shadow-[3px_3px_0_0_hsla(var(--neo-shadow-color),0.5)]`
+                  : "bg-[hsl(var(--neo-surface))] hover:shadow-[2px_2px_0_0_hsla(var(--neo-shadow-color),0.5)]"
               }`}
+              style={{ color: selectedCategory === cat.value ? undefined : "hsl(var(--neo-text))" }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -196,7 +197,7 @@ export default function BrowsePage({ user, onListingClick }) {
               <Search className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-2xl font-bold mb-2">No listings found</h3>
-            <p className="text-gray-600">
+            <p style={{ color: "hsl(var(--neo-text-muted))" }}>
               {listings.length === 0
                 ? 'Be the first to list something! Click "Create Listing" to get started.'
                 : "Try adjusting your filters or search query"}
@@ -217,13 +218,13 @@ export default function BrowsePage({ user, onListingClick }) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="cursor-pointer overflow-hidden bg-white border-4 border-black"
-                  style={{ boxShadow: "6px 6px 0 0 black" }}
-                  whileHover={{ y: -4, boxShadow: "10px 10px 0 0 black" }}
+                  className="cursor-pointer overflow-hidden border-4 border-[hsl(var(--neo-border))] transition-colors duration-300"
+                  style={{ boxShadow: "6px 6px 0 0 hsla(var(--neo-shadow-color), 0.5)", background: "hsl(var(--neo-surface))" }}
+                  whileHover={{ y: -4, boxShadow: "10px 10px 0 0 hsla(var(--neo-shadow-color), 0.5)" }}
                   onClick={() => onListingClick(listing._id || listing.id)}
                 >
                   {/* Image */}
-                  <div className="relative bg-gray-100 h-48 overflow-hidden border-b-4 border-black">
+                  <div className="relative h-48 overflow-hidden border-b-4 border-[hsl(var(--neo-border))]" style={{ background: "hsl(var(--neo-surface-raised))" }}>
                     {listing.image_url ? (
                       <img
                         src={listing.image_url}
@@ -231,8 +232,8 @@ export default function BrowsePage({ user, onListingClick }) {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        <ShoppingCart className="w-12 h-12 text-gray-400" />
+                      <div className="w-full h-full flex items-center justify-center" style={{ background: "hsl(var(--neo-surface-raised))" }}>
+                        <ShoppingCart className="w-12 h-12" style={{ color: "hsl(var(--neo-text-muted))" }} />
                       </div>
                     )}
                     {/* Type Badge */}
@@ -249,7 +250,7 @@ export default function BrowsePage({ user, onListingClick }) {
                     </div>
                     {/* Category Badge */}
                     <div className="absolute top-3 right-3">
-                      <span className="neo-badge bg-white">
+                      <span className="neo-badge">
                         {listing.category}
                       </span>
                     </div>
@@ -260,7 +261,7 @@ export default function BrowsePage({ user, onListingClick }) {
                     <h3 className="font-bold text-lg mb-1 line-clamp-1">
                       {listing.title}
                     </h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                    <p className="text-sm mb-3 line-clamp-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
                       {listing.description}
                     </p>
 
@@ -269,16 +270,16 @@ export default function BrowsePage({ user, onListingClick }) {
                         ₹{listing.price}
                       </span>
                       {listing.type === "Rent" && listing.max_days && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs" style={{ color: "hsl(var(--neo-text-muted))" }}>
                           up to {listing.max_days} days
                         </span>
                       )}
                     </div>
 
                     {/* Seller Info */}
-                    <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200">
+                    <div className="flex items-center justify-between pt-3 border-t-2 border-[hsl(var(--neo-border))]">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center border-2 border-black">
+                        <div className="w-7 h-7 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center border-2 border-[hsl(var(--neo-border))]">
                           <span className="font-bold text-xs">
                             {(listing.seller?.username || "U")[0].toUpperCase()}
                           </span>

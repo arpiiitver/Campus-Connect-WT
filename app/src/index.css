@@ -29,7 +29,7 @@
     --radius: 0px;
     
     /* Custom Neubrutalism Colors */
-    --neo-yellow: 60 100% 50%;
+    --neo-yellow: 50 100% 50%;
     --neo-pink: 320 100% 60%;
     --neo-blue: 200 100% 50%;
     --neo-green: 120 100% 45%;
@@ -40,28 +40,50 @@
     /* Border width */
     --border-width: 3px;
     --shadow-offset: 6px;
+    
+    /* Semantic Dark Mode Tokens */
+    --neo-surface: 0 0% 100%;
+    --neo-surface-raised: 0 0% 96%;
+    --neo-text: 0 0% 0%;
+    --neo-text-muted: 0 0% 40%;
+    --neo-border: 0 0% 0%;
+    --neo-shadow-color: 0, 0%, 0%;
+    --neo-overlay: 0 0% 97%;
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 60 100% 50%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 48 100% 55%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 20%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 60 100% 50%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 48 100% 55%;
     --accent-foreground: 0 0% 0%;
-    --destructive: 0 100% 50%;
+    --destructive: 0 80% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100%;
-    --input: 0 0% 20%;
-    --ring: 60 100% 50%;
+    --border: 0 0% 20%;
+    --input: 0 0% 14%;
+    --ring: 48 100% 55%;
+    
+    --neo-yellow: 48 100% 55%;
+    --neo-pink: 320 100% 65%;
+    --neo-blue: 200 100% 55%;
+    --neo-green: 140 100% 45%;
+    
+    --neo-surface: 0 0% 9%;
+    --neo-surface-raised: 0 0% 14%;
+    --neo-text: 0 0% 98%;
+    --neo-text-muted: 0 0% 65%;
+    --neo-border: 0 0% 20%;
+    --neo-shadow-color: 0, 0%, 0%;
+    --neo-overlay: 0 0% 6%;
   }
 
   * {
@@ -71,29 +93,40 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Space Grotesk', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
 
 @layer components {
   /* Neubrutalism Button Styles */
   .neo-button {
-    @apply relative px-6 py-3 font-bold text-black bg-white transition-all duration-150;
-    border: var(--border-width) solid black;
-    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+    @apply relative px-6 py-3 font-bold transition-all duration-150;
+    color: hsl(var(--neo-text));
+    background: hsl(var(--neo-surface));
+    border: var(--border-width) solid hsl(var(--neo-border));
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+
+  .dark .neo-button {
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 rgba(0, 0, 0, 1);
+  }
+
+  .dark .neo-button:hover {
+    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 rgba(0, 0, 0, 1);
   }
 
   .neo-button:hover {
     transform: translate(-2px, -2px);
-    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 black;
+    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .neo-button:active {
     transform: translate(var(--shadow-offset), var(--shadow-offset));
-    box-shadow: 0 0 0 0 black;
+    box-shadow: 0 0 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .neo-button-primary {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
   }
 
   .neo-button-pink {
@@ -110,13 +143,19 @@
 
   /* Neubrutalism Card Styles */
   .neo-card {
-    @apply bg-white p-6;
-    border: var(--border-width) solid black;
-    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+    @apply p-6;
+    background: hsl(var(--neo-surface));
+    color: hsl(var(--neo-text));
+    border: var(--border-width) solid hsl(var(--neo-border));
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+
+  .dark .neo-card {
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 rgba(0, 0, 0, 1);
   }
 
   .neo-card-yellow {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
   }
 
   .neo-card-pink {
@@ -133,25 +172,42 @@
 
   /* Neubrutalism Input Styles */
   .neo-input {
-    @apply px-4 py-3 bg-white outline-none transition-all;
-    border: var(--border-width) solid black;
-    box-shadow: 4px 4px 0 0 black;
+    @apply px-4 py-3 outline-none transition-all;
+    background: hsl(var(--neo-surface));
+    color: hsl(var(--neo-text));
+    border: var(--border-width) solid hsl(var(--neo-border));
+    box-shadow: 4px 4px 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+  
+  .neo-input::placeholder {
+    color: hsl(var(--neo-text-muted));
   }
 
   .neo-input:focus {
-    box-shadow: 2px 2px 0 0 black;
+    box-shadow: 2px 2px 0 0 hsla(var(--neo-shadow-color), 0.5);
     transform: translate(2px, 2px);
+    border-color: hsl(var(--neo-yellow));
+  }
+  
+  .dark .neo-input {
+    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 1);
+  }
+
+  .dark .neo-input:focus {
+    box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 1);
   }
 
   /* Neubrutalism Badge Styles */
   .neo-badge {
     @apply inline-flex items-center px-3 py-1 text-sm font-bold;
-    border: 2px solid black;
-    box-shadow: 2px 2px 0 0 black;
+    border: 2px solid hsl(var(--neo-border));
+    box-shadow: 2px 2px 0 0 hsla(var(--neo-shadow-color), 0.5);
+    color: hsl(var(--neo-text));
+    background: hsl(var(--neo-surface));
   }
 
   .neo-badge-yellow {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
   }
 
   .neo-badge-pink {
@@ -174,7 +230,11 @@
 
   .bento-item:hover {
     transform: translate(-4px, -4px);
-    box-shadow: calc(var(--shadow-offset) + 4px) calc(var(--shadow-offset) + 4px) 0 0 black;
+    box-shadow: calc(var(--shadow-offset) + 4px) calc(var(--shadow-offset) + 4px) 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+
+  .dark .bento-item:hover {
+    box-shadow: calc(var(--shadow-offset) + 4px) calc(var(--shadow-offset) + 4px) 0 0 rgba(0, 0, 0, 1);
   }
 
   /* Admin Dark Mode */
@@ -198,32 +258,34 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-left: 3px solid black;
+    background: hsl(var(--neo-surface-raised));
+    border-left: 3px solid hsl(var(--neo-border));
   }
 
   ::-webkit-scrollbar-thumb {
-    background: black;
-    border: 2px solid #f0f0f0;
+    background: hsl(var(--neo-border));
+    border: 2px solid hsl(var(--neo-surface-raised));
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #333;
+    background: hsl(var(--neo-text-muted));
   }
 
   /* Mobile Bottom Navigation */
   .mobile-nav {
-    @apply fixed bottom-0 left-0 right-0 bg-white z-50;
-    border-top: var(--border-width) solid black;
-    box-shadow: 0 -4px 0 0 rgba(0,0,0,0.1);
+    @apply fixed bottom-0 left-0 right-0 z-50;
+    background: hsl(var(--neo-surface));
+    border-top: var(--border-width) solid hsl(var(--neo-border));
+    box-shadow: 0 -4px 0 0 hsla(var(--neo-shadow-color), 0.1);
   }
 
   .mobile-nav-item {
     @apply flex flex-col items-center justify-center py-3 px-4 transition-colors;
+    color: hsl(var(--neo-text-muted));
   }
 
   .mobile-nav-item.active {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
   }
 
   /* Animation Classes */
@@ -274,24 +336,25 @@
 
   /* Countdown Timer */
   .countdown-box {
-    @apply inline-flex items-center justify-center px-3 py-2 font-mono font-bold text-lg;
-    border: 3px solid black;
+    @apply inline-flex items-center justify-center px-3 py-2 font-mono font-bold text-lg text-black;
+    border: 3px solid hsl(var(--neo-border));
     background: hsl(var(--neo-yellow));
   }
 
   /* Chat Bubble */
   .chat-bubble {
     @apply relative px-4 py-3 max-w-[80%];
-    border: 3px solid black;
+    border: 3px solid hsl(var(--neo-border));
   }
 
   .chat-bubble-sent {
-    @apply bg-[hsl(var(--neo-yellow))] ml-auto;
+    @apply bg-[hsl(var(--neo-yellow))] text-black ml-auto;
     border-radius: 16px 16px 0 16px;
   }
 
   .chat-bubble-received {
-    @apply bg-white;
+    background: hsl(var(--neo-surface-raised));
+    color: hsl(var(--neo-text));
     border-radius: 16px 16px 16px 0;
   }
 
@@ -303,12 +366,13 @@
   /* Step Indicator */
   .step-indicator {
     @apply flex items-center justify-center w-10 h-10 font-bold text-lg;
-    border: 3px solid black;
-    background: white;
+    border: 3px solid hsl(var(--neo-border));
+    background: hsl(var(--neo-surface));
+    color: hsl(var(--neo-text));
   }
 
   .step-indicator.active {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
   }
 
   .step-indicator.completed {
@@ -318,20 +382,27 @@
   /* Filter Pill */
   .filter-pill {
     @apply px-4 py-2 font-bold text-sm transition-all;
-    border: 3px solid black;
-    background: white;
-    box-shadow: 3px 3px 0 0 black;
+    border: 3px solid hsl(var(--neo-border));
+    background: hsl(var(--neo-surface));
+    color: hsl(var(--neo-text));
+    box-shadow: 3px 3px 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .filter-pill:hover {
     transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 0 black;
+    box-shadow: 4px 4px 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .filter-pill.active {
-    @apply bg-[hsl(var(--neo-yellow))];
+    @apply bg-[hsl(var(--neo-yellow))] text-black;
     transform: translate(2px, 2px);
-    box-shadow: 1px 1px 0 0 black;
+    box-shadow: 1px 1px 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+  
+  /* Dark-aware particle canvas */
+  .dark .neo-bg {
+    background-color: hsl(0, 0%, 4%);
+    background-image: none;
   }
 }
 
@@ -341,14 +412,25 @@
   }
 
   .neo-shadow {
-    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 black;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .neo-shadow-sm {
-    box-shadow: 3px 3px 0 0 black;
+    box-shadow: 3px 3px 0 0 hsla(var(--neo-shadow-color), 0.5);
   }
 
   .neo-shadow-lg {
-    box-shadow: 8px 8px 0 0 black;
+    box-shadow: 8px 8px 0 0 hsla(var(--neo-shadow-color), 0.5);
+  }
+
+  /* Premium Warm Grid Background */
+  .neo-bg {
+    background-color: hsl(45, 60%, 93%);
+    background-image: 
+      linear-gradient(rgba(0, 0, 0, 0.05) 1.5px, transparent 1.5px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+    background-position: -1.5px -1.5px;
+    transition: background-color 0.3s ease;
   }
 }

@@ -4,6 +4,23 @@ const Message = require('../models/Message');
 const Listing = require('../models/Listing');
 const authMiddleware = require('../middleware/auth');
 const { deriveRoomKey, encryptMessage, decryptMessage } = require('../utils/crypto');
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../uploads/chat'));
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 25 * 1024 * 1024 } // 25MB
+});
 
 const router = express.Router();
 
@@ -218,7 +235,11 @@ router.get('/rooms/:roomId/messages', async (req, res) => {
         room_id: obj.room_id,
         sender_id: obj.sender_id?._id || obj.sender_id,
         sender: obj.sender_id,
-        text,
+        text: obj.is_deleted ? "" : text,
+        media_url: obj.is_deleted ? null : obj.media_url,
+        media_type: obj.is_deleted ? null : obj.media_type,
+        is_edited: obj.is_edited,
+        is_deleted: obj.is_deleted,
         created_at: obj.createdAt,
       };
     });
@@ -234,14 +255,14 @@ router.get('/rooms/:roomId/messages', async (req, res) => {
 router.post('/rooms/:roomId/messages', async (req, res) => {
   try {
     const { roomId } = req.params;
-    const { text } = req.body;
+    const { text, media_url, media_type } = req.body;
     const userId = req.user._id;
 
-    if (!text || !text.trim()) {
-      return res.status(400).json({ message: 'Message text is required.' });
+    if (!text && !media_url) {
+      return res.status(400).json({ message: 'Message text or media is required.' });
     }
 
-    if (text.length > 2000) {
+    if (text && text.length > 2000) {
       return res.status(400).json({ message: 'Message is too long (max 2000 characters).' });
     }
 
@@ -258,9 +279,10 @@ router.post('/rooms/:roomId/messages', async (req, res) => {
       return res.status(403).json({ message: 'You are not a participant of this chat.' });
     }
 
-    // Encrypt the message
+    // Encrypt the message text
     const roomKey = deriveRoomKey(roomId);
-    const encrypted = encryptMessage(text.trim(), roomKey);
+    const safeText = text ? text.trim() : " ";
+    const encrypted = encryptMessage(safeText, roomKey);
 
     // Save encrypted message
     const message = new Message({
@@ -269,6 +291,8 @@ router.post('/rooms/:roomId/messages', async (req, res) => {
       ciphertext: encrypted.ciphertext,
       iv: encrypted.iv,
       tag: encrypted.tag,
+      media_url: media_url || null,
+      media_type: media_type || null,
     });
 
     await message.save();
@@ -287,7 +311,11 @@ router.post('/rooms/:roomId/messages', async (req, res) => {
       room_id: obj.room_id,
       sender_id: obj.sender_id?._id || obj.sender_id,
       sender: obj.sender_id,
-      text: text.trim(),
+      text: safeText,
+      media_url: obj.media_url,
+      media_type: obj.media_type,
+      is_edited: false,
+      is_deleted: false,
       created_at: obj.createdAt,
     };
 
@@ -300,6 +328,126 @@ router.post('/rooms/:roomId/messages', async (req, res) => {
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ message: 'Failed to send message.' });
+  }
+});
+
+// POST /api/chat/rooms/:roomId/media — Upload media
+router.post('/rooms/:roomId/media', upload.single('media'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file provided.' });
+    }
+    const fileUrl = `/uploads/chat/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  } catch (error) {
+    console.error('Upload media error:', error);
+    res.status(500).json({ message: 'Failed to upload media.' });
+  }
+});
+
+// PATCH /api/chat/rooms/:roomId/messages/:messageId — Edit a message
+router.patch('/rooms/:roomId/messages/:messageId', async (req, res) => {
+  try {
+    const { roomId, messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: 'Message text is required.' });
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found.' });
+    if (message.sender_id.toString() !== userId.toString()) return res.status(403).json({ message: 'Forbidden' });
+    if (message.is_deleted) return res.status(400).json({ message: 'Cannot edit a deleted message.' });
+
+    // Encrypt the new text
+    const roomKey = deriveRoomKey(roomId);
+    const encrypted = encryptMessage(text.trim(), roomKey);
+
+    message.ciphertext = encrypted.ciphertext;
+    message.iv = encrypted.iv;
+    message.tag = encrypted.tag;
+    message.is_edited = true;
+    await message.save();
+
+    const responseData = {
+      id: message._id,
+      room_id: message.room_id,
+      text: text.trim(),
+      is_edited: true,
+      sender_id: message.sender_id,
+    };
+
+    if (req.io) {
+      req.io.to(roomId).emit('message_edited', responseData);
+    }
+    res.json(responseData);
+  } catch (error) {
+    console.error('Edit error:', error);
+    res.status(500).json({ message: 'Failed to edit message' });
+  }
+});
+
+// DELETE /api/chat/rooms/:roomId/messages/:messageId — Delete a message
+router.delete('/rooms/:roomId/messages/:messageId', async (req, res) => {
+  try {
+    const { roomId, messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found.' });
+    if (message.sender_id.toString() !== userId.toString()) return res.status(403).json({ message: 'Forbidden' });
+
+    message.is_deleted = true;
+    message.media_url = null;
+    message.media_type = null;
+    message.is_edited = false;
+
+    // Destroy payload
+    const roomKey = deriveRoomKey(roomId);
+    const encrypted = encryptMessage("[Message removed]", roomKey);
+    message.ciphertext = encrypted.ciphertext;
+    message.iv = encrypted.iv;
+    message.tag = encrypted.tag;
+
+    await message.save();
+
+    if (req.io) {
+      req.io.to(roomId).emit('message_deleted', { id: message._id, room_id: roomId });
+    }
+
+    res.json({ message: 'Deleted successfully' });
+  } catch (error) {
+    console.error('Delete msg error:', error);
+    res.status(500).json({ message: 'Failed to delete message' });
+  }
+});
+
+// DELETE /api/chat/rooms/:roomId — Delete chat entirely
+router.delete('/rooms/:roomId', async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user._id;
+
+    const room = await ChatRoom.findById(roomId);
+    if (!room) return res.status(404).json({ message: 'Room not found.' });
+
+    if (room.buyer_id.toString() !== userId.toString() && room.seller_id.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    await ChatRoom.findByIdAndDelete(roomId);
+    await Message.deleteMany({ room_id: roomId });
+
+    if (req.io) {
+      req.io.to(roomId).emit('chat_deleted', { room_id: roomId });
+    }
+
+    res.json({ message: 'Chat deleted entirely' });
+  } catch (error) {
+    console.error('Delete chat error:', error);
+    res.status(500).json({ message: 'Failed to delete chat' });
   }
 });
 

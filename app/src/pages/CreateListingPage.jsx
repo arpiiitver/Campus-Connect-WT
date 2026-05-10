@@ -132,25 +132,27 @@ export default function CreateListingPage({ user, onSuccess }) {
               <div className="flex gap-4">
                 <motion.button
                   onClick={() => setType("Sell")}
-                  className={`flex-1 p-4 border-4 border-black text-left transition-all ${
-                    type === "Sell" ? "bg-[hsl(var(--neo-yellow))]" : "bg-white"
+                  className={`flex-1 p-4 border-4 border-[hsl(var(--neo-border))] text-left transition-all ${
+                    type === "Sell" ? "bg-[hsl(var(--neo-yellow))] text-black" : ""
                   }`}
+                  style={type !== "Sell" ? { background: "hsl(var(--neo-surface))" } : {}}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <ShoppingCart className="w-8 h-8 mb-2" />
                   <p className="font-bold text-lg">Sell</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm opacity-70">
                     Sell an item permanently
                   </p>
                 </motion.button>
                 <motion.button
                   onClick={() => setType("Rent")}
-                  className={`flex-1 p-4 border-4 border-black text-left transition-all ${
+                  className={`flex-1 p-4 border-4 border-[hsl(var(--neo-border))] text-left transition-all ${
                     type === "Rent"
                       ? "bg-[hsl(var(--neo-blue))] text-white"
-                      : "bg-white"
+                      : ""
                   }`}
+                  style={type !== "Rent" ? { background: "hsl(var(--neo-surface))" } : {}}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -172,7 +174,7 @@ export default function CreateListingPage({ user, onSuccess }) {
                 maxLength={100}
               />
 
-              <p className="text-sm text-gray-500 mt-1">{title.length}/100</p>
+              <p className="text-sm mt-1" style={{ color: "hsl(var(--neo-text-muted))" }}>{title.length}/100</p>
             </div>
 
             <div>
@@ -185,7 +187,7 @@ export default function CreateListingPage({ user, onSuccess }) {
                 maxLength={500}
               />
 
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm mt-1" style={{ color: "hsl(var(--neo-text-muted))" }}>
                 {description.length}/500
               </p>
             </div>
@@ -202,11 +204,12 @@ export default function CreateListingPage({ user, onSuccess }) {
                   <motion.button
                     key={cat.value}
                     onClick={() => setCategory(cat.value)}
-                    className={`p-4 border-4 border-black text-center transition-all ${
+                    className={`p-4 border-4 border-[hsl(var(--neo-border))] text-center transition-all ${
                       category === cat.value
-                        ? "bg-[hsl(var(--neo-yellow))]"
-                        : "bg-white hover:bg-gray-50"
+                        ? "bg-[hsl(var(--neo-yellow))] text-black"
+                        : ""
                     }`}
+                    style={category !== cat.value ? { background: "hsl(var(--neo-surface))" } : {}}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -233,7 +236,7 @@ export default function CreateListingPage({ user, onSuccess }) {
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="w-full max-w-md h-64 object-cover border-4 border-black"
+                    className="w-full max-w-md h-64 object-cover border-4 border-[hsl(var(--neo-border))]"
                   />
 
                   <motion.button
@@ -241,7 +244,7 @@ export default function CreateListingPage({ user, onSuccess }) {
                       setImage(null);
                       setImagePreview(null);
                     }}
-                    className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white border-3 border-black flex items-center justify-center"
+                    className="absolute -top-3 -right-3 w-8 h-8 bg-red-500 text-white border-3 border-[hsl(var(--neo-border))] flex items-center justify-center"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -251,15 +254,16 @@ export default function CreateListingPage({ user, onSuccess }) {
               ) : (
                 <motion.button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full max-w-md h-64 border-4 border-dashed border-black flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full max-w-md h-64 border-4 border-dashed border-[hsl(var(--neo-border))] flex flex-col items-center justify-center transition-colors"
+                  style={{ background: "hsl(var(--neo-surface-raised))" }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Camera className="w-12 h-12 mb-4 text-gray-400" />
-                  <p className="font-bold text-gray-600">
+                  <Camera className="w-12 h-12 mb-4" style={{ color: "hsl(var(--neo-text-muted))" }} />
+                  <p className="font-bold" style={{ color: "hsl(var(--neo-text-muted))" }}>
                     Click to upload photo
                   </p>
-                  <p className="text-sm text-gray-400">Max 5MB</p>
+                  <p className="text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>Max 5MB</p>
                 </motion.button>
               )}
             </div>
@@ -286,12 +290,12 @@ export default function CreateListingPage({ user, onSuccess }) {
                       min="1"
                     />
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm mt-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
                     This is the price buyers will see
                   </p>
                 </div>
 
-                <div className="p-4 bg-[hsl(var(--neo-yellow))] border-4 border-black">
+                <div className="p-4 bg-[hsl(var(--neo-yellow))] border-4 border-[hsl(var(--neo-border))] text-black">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-5 h-5" />
                     <span className="font-bold">Hidden Minimum Price</span>
@@ -375,12 +379,12 @@ export default function CreateListingPage({ user, onSuccess }) {
           <div className="space-y-6">
             <h3 className="text-xl font-bold">Review Your Listing</h3>
 
-            <div className="neo-card bg-gray-50">
+            <div className="neo-card" style={{ background: "hsl(var(--neo-surface-raised))" }}>
               {imagePreview && (
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-full h-48 object-cover border-b-4 border-black mb-4"
+                  className="w-full h-48 object-cover border-b-4 border-[hsl(var(--neo-border))] mb-4"
                 />
               )}
 
@@ -390,13 +394,13 @@ export default function CreateListingPage({ user, onSuccess }) {
                 >
                   {type === "Sell" ? "For Sale" : "For Rent"}
                 </span>
-                <span className="neo-badge bg-white">{category}</span>
+                <span className="neo-badge">{category}</span>
               </div>
 
               <h4 className="text-2xl font-bold mb-2">{title}</h4>
-              <p className="text-gray-600 mb-4">{description}</p>
+              <p className="mb-4" style={{ color: "hsl(var(--neo-text-muted))" }}>{description}</p>
 
-              <div className="border-t-4 border-black pt-4">
+              <div className="border-t-4 border-[hsl(var(--neo-border))] pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">
                     {type === "Sell" ? "Price" : "Price per Day"}
@@ -404,7 +408,7 @@ export default function CreateListingPage({ user, onSuccess }) {
                   <span className="text-2xl font-bold">₹{price}</span>
                 </div>
                 {type === "Sell" && (
-                  <div className="flex justify-between items-center text-sm text-gray-500">
+                  <div className="flex justify-between items-center text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
                     <span>Minimum Acceptable (Hidden)</span>
                     <span>₹{minPrice}</span>
                   </div>
@@ -424,7 +428,7 @@ export default function CreateListingPage({ user, onSuccess }) {
               </div>
             </div>
 
-            <div className="p-4 bg-[hsl(var(--neo-green))] text-white border-4 border-black">
+            <div className="p-4 bg-[hsl(var(--neo-green))] text-white border-4 border-[hsl(var(--neo-border))]">
               <p className="font-bold flex items-center gap-2">
                 <Check className="w-5 h-5" />
                 Ready to publish!
@@ -451,7 +455,7 @@ export default function CreateListingPage({ user, onSuccess }) {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="text-4xl font-bold mb-2">Create Listing</h1>
-          <p className="text-gray-600">List your item for sale or rent</p>
+          <p style={{ color: "hsl(var(--neo-text-muted))" }}>List your item for sale or rent</p>
         </motion.div>
 
         {/* Step Indicator */}
@@ -467,8 +471,10 @@ export default function CreateListingPage({ user, onSuccess }) {
                     currentStep > step.id
                       ? "#22c55e"
                       : currentStep === step.id
-                        ? "#fef08a"
-                        : "#ffffff",
+                        ? "hsl(var(--neo-yellow))"
+                        : "hsl(var(--neo-surface-raised))",
+                  color: "hsl(var(--neo-text))",
+                  border: "3px solid hsl(var(--neo-border))",
                 }}
               >
                 {currentStep > step.id ? (
@@ -479,7 +485,8 @@ export default function CreateListingPage({ user, onSuccess }) {
               </motion.div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-12 md:w-24 h-1 mx-2 ${currentStep > step.id ? "bg-green-500" : "bg-gray-300"}`}
+                  className={`w-12 md:w-24 h-1 mx-2 ${currentStep > step.id ? "bg-green-500" : ""}`}
+                  style={currentStep <= step.id ? { background: "hsl(var(--neo-border))" } : {}}
                 />
               )}
             </div>
@@ -487,7 +494,7 @@ export default function CreateListingPage({ user, onSuccess }) {
         </div>
 
         {/* Form Content */}
-        <div className="neo-card bg-white min-h-[400px]">
+        <div className="neo-card min-h-[400px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}

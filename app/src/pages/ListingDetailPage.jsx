@@ -145,7 +145,7 @@ export default function ListingDetailPage({
         <div className="neo-card text-center">
           <AlertTriangle className="w-16 h-16 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Listing Not Found</h2>
-          <p className="text-gray-600 mb-4">
+          <p className="mb-4" style={{ color: "hsl(var(--neo-text-muted))" }}>
             This listing may have been removed or is no longer available.
           </p>
           <motion.button
@@ -172,15 +172,17 @@ export default function ListingDetailPage({
     <div className="min-h-screen pb-20">
       {/* Header */}
       <motion.div
-        className="sticky top-0 z-10 bg-white border-b-4 border-black p-4"
+        className="sticky top-0 z-10 p-4 transition-colors duration-300"
+        style={{ background: "hsl(var(--neo-surface))", borderBottom: "4px solid hsl(var(--neo-border))" }}
         initial={{ y: -50 }}
         animate={{ y: 0 }}
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <motion.button
             onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-            whileHover={{ scale: 1.1 }}
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: "hsl(var(--neo-text))" }}
+            whileHover={{ scale: 1.1, background: "hsl(var(--neo-surface-raised))" }}
             whileTap={{ scale: 0.9 }}
           >
             <ArrowLeft className="w-6 h-6" />
@@ -200,7 +202,8 @@ export default function ListingDetailPage({
       <div className="max-w-4xl mx-auto p-4">
         {/* Image */}
         <motion.div
-          className="relative bg-gray-200 border-4 border-black mb-6 overflow-hidden"
+          className="relative border-4 border-[hsl(var(--neo-border))] mb-6 overflow-hidden"
+          style={{ background: "hsl(var(--neo-surface-raised))" }}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
@@ -227,7 +230,7 @@ export default function ListingDetailPage({
             >
               {listing.type === "Sell" ? "For Sale" : "For Rent"}
             </span>
-            <span className="neo-badge bg-white">{listing.category}</span>
+            <span className="neo-badge">{listing.category}</span>
           </div>
 
           {/* Status Badge */}
@@ -256,7 +259,7 @@ export default function ListingDetailPage({
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div className="flex-1">
               <h2 className="text-3xl font-bold mb-2">{listing.title}</h2>
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
                 <Calendar className="w-4 h-4" />
                 <span className="text-sm">
                   Posted{" "}
@@ -272,22 +275,22 @@ export default function ListingDetailPage({
             <div className="text-right">
               <p className="text-4xl font-bold">₹{listing.price}</p>
               {listing.type === "Rent" && (
-                <p className="text-gray-600">per day</p>
+                <p style={{ color: "hsl(var(--neo-text-muted))" }}>per day</p>
               )}
             </div>
           </div>
 
           {/* Seller Info */}
-          <div className="neo-card bg-gray-50 mb-6">
+          <div className="neo-card mb-6" style={{ background: "hsl(var(--neo-surface-raised))" }}>
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center border-4 border-black">
+              <div className="w-16 h-16 bg-[hsl(var(--neo-yellow))] rounded-full flex items-center justify-center border-4 border-[hsl(var(--neo-border))] text-black">
                 <span className="text-2xl font-bold">
                   {listing.seller?.username?.[0]?.toUpperCase() || "U"}
                 </span>
               </div>
               <div className="flex-1">
                 <p className="font-bold text-lg">{listing.seller?.username}</p>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm" style={{ color: "hsl(var(--neo-text-muted))" }}>
                   <CheckCircle className="w-4 h-4 text-[hsl(var(--neo-green))]" />
                   <span>Trust Score: {listing.seller?.trust_score}</span>
                 </div>
@@ -328,7 +331,7 @@ export default function ListingDetailPage({
                   )
                 }
                 disabled={isUpdatingStatus}
-                className="neo-button bg-white text-green-700 disabled:opacity-50 flex-shrink-0 flex items-center gap-2"
+                className="neo-button bg-white text-green-700 disabled:opacity-50 flex-shrink-0 flex items-center gap-2 border-2 border-[hsl(var(--neo-border))]"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -363,7 +366,7 @@ export default function ListingDetailPage({
                     <motion.button
                       onClick={() => handleUpdateStatus("Available")}
                       disabled={isUpdatingStatus}
-                      className="neo-button bg-white text-[hsl(var(--neo-green))] flex-shrink-0 flex items-center gap-2"
+                      className="neo-button text-[hsl(var(--neo-green))] flex-shrink-0 flex items-center gap-2"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
@@ -387,15 +390,15 @@ export default function ListingDetailPage({
           {/* Description */}
           <div className="mb-6">
             <h3 className="text-xl font-bold mb-3">Description</h3>
-            <div className="neo-card bg-white">
+            <div className="neo-card">
               <p className="whitespace-pre-wrap">{listing.description}</p>
             </div>
           </div>
 
           {/* Details Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <div className="neo-card bg-[hsl(var(--neo-yellow))]">
-              <p className="text-sm text-gray-700 mb-1">Category</p>
+            <div className="neo-card bg-[hsl(var(--neo-yellow))] text-black">
+              <p className="text-sm opacity-80 mb-1">Category</p>
               <p className="font-bold text-lg">{listing.category}</p>
             </div>
             <div className="neo-card bg-[hsl(var(--neo-blue))] text-white">
@@ -419,7 +422,7 @@ export default function ListingDetailPage({
           </div>
 
           {/* Safety Tips */}
-          <div className="neo-card bg-[hsl(var(--neo-yellow))]">
+          <div className="neo-card bg-[hsl(var(--neo-yellow))] text-black">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="w-5 h-5" />
               <h3 className="font-bold">Safety Tips</h3>
@@ -454,7 +457,7 @@ export default function ListingDetailPage({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="neo-card bg-white max-w-md w-full"
+            className="neo-card max-w-md w-full"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
           >
@@ -463,11 +466,11 @@ export default function ListingDetailPage({
               <h3 className="text-xl font-bold">Remove Listing</h3>
             </div>
 
-            <p className="text-gray-600 mb-2">
+            <p className="mb-2" style={{ color: "hsl(var(--neo-text-muted))" }}>
               Are you sure you want to remove <strong>{listing.title}</strong>{" "}
               from your listings?
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm mb-6" style={{ color: "hsl(var(--neo-text-muted))" }}>
               This action cannot be undone. The listing will be permanently
               deleted.
             </p>
@@ -506,7 +509,7 @@ export default function ListingDetailPage({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="neo-card bg-white max-w-md w-full"
+            className="neo-card max-w-md w-full"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
           >
@@ -515,7 +518,7 @@ export default function ListingDetailPage({
               <h3 className="text-xl font-bold">Report Listing</h3>
             </div>
 
-            <p className="text-gray-600 mb-4">
+            <p className="mb-4" style={{ color: "hsl(var(--neo-text-muted))" }}>
               Please tell us why you're reporting this listing. This helps us
               keep the marketplace safe.
             </p>
