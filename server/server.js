@@ -21,9 +21,16 @@ const { deriveRoomKey, encryptMessage, decryptMessage } = require('./utils/crypt
 const app = express();
 const server = http.createServer(app);
 
-const CORS_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
+const CORS_ORIGINS = [
+  'http://localhost:5173', 
+  'http://localhost:5174', 
+  'http://localhost:3000',
+  'https://campus-connect-wt.vercel.app'
+];
 if (process.env.CLIENT_URL) {
-  CORS_ORIGINS.push(process.env.CLIENT_URL);
+  // Allow multiple URLs separated by commas just in case
+  const extraOrigins = process.env.CLIENT_URL.split(',').map(url => url.trim());
+  CORS_ORIGINS.push(...extraOrigins);
 }
 
 // ── Middleware ──────────────────────────────────────────────
