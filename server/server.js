@@ -21,21 +21,24 @@ const { deriveRoomKey, encryptMessage, decryptMessage } = require('./utils/crypt
 const app = express();
 const server = http.createServer(app);
 
-const CORS_ORIGINS = [
-  'http://localhost:5173', 
-  'http://localhost:5174', 
-  'http://localhost:3000',
-  'https://campus-connect-wt.vercel.app'
-];
-if (process.env.CLIENT_URL) {
-  // Allow multiple URLs separated by commas just in case
-  const extraOrigins = process.env.CLIENT_URL.split(',').map(url => url.trim());
-  CORS_ORIGINS.push(...extraOrigins);
-}
-
 // ── Middleware ──────────────────────────────────────────────
 app.use(cors({
-  origin: CORS_ORIGINS,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow any localhost or any Vercel domain
+    if (origin.includes('localhost') || origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Check if it's explicitly in the CLIENT_URL environment variable
+    if (process.env.CLIENT_URL && process.env.CLIENT_URL.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 
@@ -52,7 +55,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // ── Socket.IO Setup ─────────────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: CORS_ORIGINS,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (origin.includes('localhost') || origin.includes('vercel.app')) {
+        return callback(null, true);
+      }
+      if (process.env.CLIENT_URL && process.env.CLIENT_URL.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   },
 });
